@@ -1,28 +1,49 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { MoneyInput } from '../components/MoneyInput';
 import type { Application } from '../types';
 
 export const NewApplication = () => {
     const navigate = useNavigate();
     const { addApplication } = useData();
     const [loading, setLoading] = useState(false);
+    const [amount, setAmount] = useState(0);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
 
-        // Simulate API call
+        // Capture form values before async call
+        const form = e.currentTarget;
+
+        const fileInput = form.elements.namedItem('nationalIdFile') as HTMLInputElement;
+        const nameInput = form.elements.namedItem('name') as HTMLInputElement;
+        const salesIdInput = form.elements.namedItem('salesId') as HTMLInputElement;
+        const tenorInput = form.elements.namedItem('tenor') as HTMLSelectElement;
+
+        const file = fileInput?.files?.[0];
+        const nationalIdFile = file ? URL.createObjectURL(file) : undefined;
+
+        const customerName = nameInput.value;
+        const nik = form.elements.namedItem('nik') instanceof HTMLInputElement ? (form.elements.namedItem('nik') as HTMLInputElement).value : '';
+        const salesId = salesIdInput.value;
+        const loanAmount = amount;
+        const tenor = parseInt(tenorInput.value, 10);
+
         setTimeout(() => {
             const newApp: Application = {
                 id: `APP-${Math.floor(Math.random() * 10000)}`,
                 customerId: `CUST-${Math.floor(Math.random() * 10000)}`,
-                customerName: (e.target as any).name.value,
-                loanAmount: parseInt((e.target as any).amount.value),
-                tenor: parseInt((e.target as any).tenor.value),
+                customerName,
+                nik,
+                salesId,
+                loanAmount,
+                tenor,
                 status: 'Submitted',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
+                nationalIdFile,
             };
 
             addApplication(newApp);
@@ -43,6 +64,16 @@ export const NewApplication = () => {
                     <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Customer Information</h3>
 
                     <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Sales ID</label>
+                            <input
+                                name="salesId"
+                                required
+                                type="text"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="e.g. S-12345"
+                            />
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                             <input
@@ -53,6 +84,7 @@ export const NewApplication = () => {
                                 placeholder="e.g. Budi Santoso"
                             />
                         </div>
+
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">NIK</label>
                             <input
@@ -62,6 +94,17 @@ export const NewApplication = () => {
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
                                 placeholder="16 digit NIK"
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">National ID (KTP) Document</label>
+                            <input
+                                name="nationalIdFile"
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Upload PDF, JPG, or PNG (Max 5MB)</p>
                         </div>
                     </div>
 
@@ -81,13 +124,13 @@ export const NewApplication = () => {
                     <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Loan Details</h3>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Loan Amount (Rp)</label>
-                        <input
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Loan Amount (IDR)</label>
+                        <MoneyInput
                             name="amount"
                             required
-                            type="number"
                             className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                            placeholder="e.g. 50000000"
+                            value={amount}
+                            onChange={setAmount}
                         />
                     </div>
 

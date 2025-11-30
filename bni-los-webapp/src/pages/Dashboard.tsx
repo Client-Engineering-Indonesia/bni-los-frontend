@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -12,7 +13,8 @@ const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
         'Internal Checking': 'bg-indigo-100 text-indigo-700',
         'External Checking': 'bg-purple-100 text-purple-700',
         'EDD Required': 'bg-orange-100 text-orange-700',
-        'Verification': 'bg-cyan-100 text-cyan-700',
+        'Supervisor Review': 'bg-cyan-100 text-cyan-700',
+        'Analyst Review': 'bg-pink-100 text-pink-700',
         'Approval': 'bg-yellow-100 text-yellow-700',
         'Approved': 'bg-green-100 text-green-700',
         'Rejected': 'bg-red-100 text-red-700',
@@ -29,29 +31,50 @@ const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
 
 export const Dashboard = () => {
     const { user } = useAuth();
-    const { applications } = useData();
+    const { applications, deleteApplication } = useData();
     const navigate = useNavigate();
+    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     if (!user) return null;
 
     // Filter applications based on role
     const getFilteredApplications = () => {
+        let apps = applications;
         switch (user.role) {
             case 'Sales':
-                return applications; // Sales sees all their apps (simplified)
+                // Sales sees all their apps
+                break;
             case 'ICR':
-                return applications.filter(app => ['Internal Checking', 'External Checking'].includes(app.status));
+                apps = applications.filter(app => ['Submitted', 'Internal Checking', 'External Checking'].includes(app.status));
+                break;
             case 'Supervisor':
-                return applications.filter(app => ['Submitted', 'EDD Required'].includes(app.status));
+                apps = applications.filter(app => ['Supervisor Review'].includes(app.status));
+                break;
             case 'Analyst':
-                return applications.filter(app => ['Verification'].includes(app.status));
+                apps = applications.filter(app => ['Analyst Review'].includes(app.status));
+                break;
             case 'Approver':
-                return applications.filter(app => ['Approval'].includes(app.status));
+                apps = applications.filter(app => ['Approval'].includes(app.status));
+                break;
             case 'Operation':
-                return applications.filter(app => ['Disbursement Ready', 'Disbursed'].includes(app.status));
+                apps = applications.filter(app => ['Disbursement Ready', 'Disbursed'].includes(app.status));
+                break;
             default:
-                return applications;
+                break;
         }
+
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            apps = apps.filter(app =>
+                app.customerName.toLowerCase().includes(query) ||
+                (app.nik && app.nik.includes(query)) ||
+                app.id.toLowerCase().includes(query) ||
+                (app.salesId && app.salesId.toLowerCase().includes(query))
+            );
+        }
+
+        return apps;
     };
 
     const filteredApps = getFilteredApplications();
@@ -64,9 +87,22 @@ export const Dashboard = () => {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900">Welcome back, {user.name}</h1>
-                <p className="text-slate-500">Here's what's happening with your loan applications today.</p>
+            <div className="flex justify-between items-end">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Welcome back, {user.name}</h1>
+                    <p className="text-slate-500">Here's what's happening with your loan applications today.</p>
+                </div>
+                {user.role === 'Sales' && (
+                    <div className="w-72">
+                        <input
+                            type="text"
+                            placeholder="Search Customer Name, NIK, or ID..."
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -94,6 +130,7 @@ export const Dashboard = () => {
                         <thead className="bg-slate-50">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Application ID</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Sales ID</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
@@ -105,9 +142,11 @@ export const Dashboard = () => {
                             {filteredApps.map((app) => (
                                 <tr key={app.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 text-sm font-medium text-slate-900">{app.id}</td>
+                                    <td className="px-6 py-4 text-sm text-slate-600">{app.salesId || '-'}</td>
                                     <td className="px-6 py-4 text-sm text-slate-600">
                                         <div>{app.customerName}</div>
                                         <div className="text-xs text-slate-400">{app.customerId}</div>
+                                        {app.nik && <div className="text-xs text-slate-400">NIK: {app.nik}</div>}
                                     </td>
                                     <td className="px-6 py-4 text-sm text-slate-600">
                                         Rp {app.loanAmount.toLocaleString('id-ID')}
@@ -119,12 +158,22 @@ export const Dashboard = () => {
                                         {new Date(app.updatedAt).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button
-                                            onClick={() => navigate(`/application/${app.id}`)}
-                                            className="text-bni-teal hover:text-bni-orange font-medium text-sm"
-                                        >
-                                            View Details
-                                        </button>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => navigate(`/application/${app.id}`)}
+                                                className="text-bni-teal hover:text-bni-orange font-medium text-sm"
+                                            >
+                                                View Details
+                                            </button>
+                                            {user.role === 'Sales' && (
+                                                <button
+                                                    onClick={() => setDeleteConfirm(app.id)}
+                                                    className="text-red-600 hover:text-red-700 font-medium text-sm"
+                                                >
+                                                    Delete
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -132,6 +181,34 @@ export const Dashboard = () => {
                     </table>
                 </div>
             </div>
+
+            {deleteConfirm && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                        <h2 className="text-xl font-bold text-slate-900 mb-4">Confirm Deletion</h2>
+                        <p className="text-slate-600 mb-6">
+                            Are you sure you want to delete application {deleteConfirm}? This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setDeleteConfirm(null)}
+                                className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    deleteApplication(deleteConfirm);
+                                    setDeleteConfirm(null);
+                                }}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

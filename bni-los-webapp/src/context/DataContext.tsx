@@ -6,6 +6,7 @@ interface DataContextType {
     applications: Application[];
     addApplication: (app: Application) => void;
     updateApplicationStatus: (id: string, status: ApplicationStatus, data?: any) => void;
+    deleteApplication: (id: string) => void;
     getApplication: (id: string) => Application | undefined;
 }
 
@@ -24,12 +25,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         ));
     };
 
+    const deleteApplication = (id: string) => {
+        setApplications(prev => prev.filter(app => app.id !== id));
+    };
+
     const getApplication = (id: string) => {
         return applications.find(app => app.id === id);
     };
 
     return (
-        <DataContext.Provider value={{ applications, addApplication, updateApplicationStatus, getApplication }}>
+        <DataContext.Provider value={{ applications, addApplication, updateApplicationStatus, deleteApplication, getApplication }}>
             {children}
         </DataContext.Provider>
     );

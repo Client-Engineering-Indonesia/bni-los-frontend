@@ -47,3 +47,33 @@ If you need to build the application for production deployment:
 
 -   **Port already in use**: If port 5173 is busy, Vite will automatically try the next available port (e.g., 5174). Check the terminal output for the correct URL.
 -   **Missing dependencies**: If you encounter errors about missing modules, try deleting `node_modules` and running `npm install` again.
+
+## Running in a Virtual Machine (VM)
+
+If you are running this application inside a VM (e.g., VirtualBox, VMware, WSL2) and want to access it from your host machine:
+
+1.  **Expose the Host**:
+    By default, Vite only listens on `localhost`. To access it from outside the VM, you need to expose it to the network. Run the dev server with the `--host` flag:
+    ```bash
+    npm run dev -- --host
+    ```
+
+2.  **Access from Host**:
+    The terminal will show a Network URL (e.g., `http://192.168.x.x:5173/`). Use this IP address in your host machine's browser.
+
+3.  **Network Settings**:
+    -   **Bridged Adapter**: The VM gets its own IP on your network. Use that IP.
+    -   **NAT**: You must configure **Port Forwarding** in your VM settings (Map Host Port 5173 to Guest Port 5173).
+
+### Ubuntu 22 Specifics
+
+If you cannot access the app even with `--host`, check the Ubuntu firewall (`ufw`):
+
+1.  **Allow Port 5173**:
+    ```bash
+    sudo ufw allow 5173/tcp
+    ```
+2.  **Check Status**:
+    ```bash
+    sudo ufw status
+    ```

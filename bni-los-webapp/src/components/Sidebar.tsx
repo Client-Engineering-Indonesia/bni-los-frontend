@@ -1,15 +1,17 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard,
     CheckCircle,
     LogOut,
-    PlusCircle
+    PlusCircle,
+    RefreshCw
 } from 'lucide-react';
 import clsx from 'clsx';
 
 export const Sidebar = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, isAdmin } = useAuth();
+    const navigate = useNavigate();
 
     if (!user) return null;
 
@@ -67,6 +69,15 @@ export const Sidebar = () => {
                         <p className="text-xs text-slate-500 truncate">{user.role}</p>
                     </div>
                 </div>
+                {isAdmin && (
+                    <button
+                        onClick={() => navigate('/role-selector')}
+                        className="w-full flex items-center gap-2 px-4 py-2 mb-2 text-sm text-bni-orange hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                        <RefreshCw size={16} />
+                        Switch Role
+                    </button>
+                )}
                 <button
                     onClick={logout}
                     className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-slate-800 rounded-lg transition-colors"

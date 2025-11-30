@@ -1,0 +1,844 @@
+{
+    "process_name": "BNI Fleksi Loan Origination Flow",
+    "version": "1.0",
+    "description": "End-to-end flow combining high-level diagram with Jira TLR list. Each step maps to a TLR Issue Key with role and short explanation.",
+    "phases": [
+        {
+            "id": "P1",
+            "name": "Lead & Sales Initiation",
+            "order": 1,
+            "steps": [
+                {
+                    "no": 1,
+                    "issue_key": "TLR-26",
+                    "title": "Dataleads",
+                    "epic": "Leads Management",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales / Frontliner",
+                    "short_description": "Capture and manage incoming customer leads as the starting point of the journey."
+                },
+                {
+                    "no": 2,
+                    "issue_key": "TLR-24",
+                    "title": "Database PKS",
+                    "epic": "IDE",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Database PKS step in stage Initiation."
+                },
+                {
+                    "no": 3,
+                    "issue_key": "TLR-21",
+                    "title": "Simulation BNI Fleksi Aktif (BFA)",
+                    "epic": "IDE",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Simulation BNI Fleksi Aktif (BFA) step in stage Initiation."
+                },
+                {
+                    "no": 4,
+                    "issue_key": "TLR-3",
+                    "title": "Worklist - Sales",
+                    "epic": "Worklist",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales / Frontliner",
+                    "short_description": "Route initiated applications into the Sales worklist queue."
+                },
+                {
+                    "no": 5,
+                    "issue_key": "TLR-2",
+                    "title": "Initial Data Entry - Sales",
+                    "epic": "IDE",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales / Frontliner",
+                    "short_description": "Sales inputs initial customer and application data into the system."
+                },
+                {
+                    "no": 6,
+                    "issue_key": "TLR-31",
+                    "title": "Enhanced Due Diligence (EDD) - Sales",
+                    "epic": "Enhanced Due Diligence",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales / Frontliner",
+                    "short_description": "Perform EDD for flagged or high-risk customers at Sales stage."
+                },
+                {
+                    "no": 7,
+                    "issue_key": "TLR-32",
+                    "title": "Upload Other Document Submission - Sales",
+                    "epic": "IDE",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales / Frontliner",
+                    "short_description": "Sales uploads supporting documents required for analysis."
+                },
+                {
+                    "no": 8,
+                    "issue_key": "TLR-33",
+                    "title": "Sendback Action - Sales",
+                    "epic": "Sendback",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales / Frontliner",
+                    "short_description": "Handle corrections from sendback requests back to Sales."
+                },
+                {
+                    "no": 9,
+                    "issue_key": "TLR-14",
+                    "title": "Set Link Confirmation Submission",
+                    "epic": "IDE",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Send confirmation link to applicant to confirm submission."
+                }
+            ]
+        },
+        {
+            "id": "P2",
+            "name": "Internal Checking (ICR Preparation)",
+            "order": 2,
+            "steps": [
+                {
+                    "no": 10,
+                    "issue_key": "TLR-6",
+                    "title": "Central Deduplication",
+                    "epic": "Internal Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Check if customer already exists to avoid duplicate records."
+                },
+                {
+                    "no": 11,
+                    "issue_key": "TLR-4",
+                    "title": "AML Checking",
+                    "epic": "Internal Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Perform Anti Money Laundering checks on customer data."
+                },
+                {
+                    "no": 12,
+                    "issue_key": "TLR-1",
+                    "title": "DHN (National Blacklist) Checking",
+                    "epic": "Internal Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Screen customer against national blacklist (DHN)."
+                },
+                {
+                    "no": 13,
+                    "issue_key": "TLR-41",
+                    "title": "Worklist - ICR",
+                    "epic": "Worklist",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Internal Check Reviewer (ICR)",
+                    "short_description": "Worklist - ICR step in stage Initiation."
+                },
+                {
+                    "no": 14,
+                    "issue_key": "TLR-28",
+                    "title": "Internal Check Review (ICR) - Central Deduplication and DHN Checking",
+                    "epic": "Internal Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Internal Check Reviewer (ICR)",
+                    "short_description": "ICR officer reviews internal checking results and decides whether to proceed."
+                }
+            ]
+        },
+        {
+            "id": "P3",
+            "name": "External Checking & ICR Result",
+            "order": 3,
+            "steps": [
+                {
+                    "no": 15,
+                    "issue_key": "TLR-17",
+                    "title": "Dukcapil Checking",
+                    "epic": "External Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Validate customer identity data using external sources (Dukcapil/NPWP/NIK)."
+                },
+                {
+                    "no": 16,
+                    "issue_key": "TLR-11",
+                    "title": "NPWP Checking",
+                    "epic": "External Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Validate customer identity data using external sources (Dukcapil/NPWP/NIK)."
+                },
+                {
+                    "no": 17,
+                    "issue_key": "TLR-23",
+                    "title": "Internal Check Review (ICR) - NPWP Checking",
+                    "epic": "External Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Internal Check Reviewer (ICR)",
+                    "short_description": "Internal Check Review (ICR) - NPWP Checking step in stage Initiation."
+                },
+                {
+                    "no": 18,
+                    "issue_key": "TLR-25",
+                    "title": "SLIK Aggregation",
+                    "epic": "External Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Aggregate SLIK credit information from external sources."
+                },
+                {
+                    "no": 19,
+                    "issue_key": "TLR-30",
+                    "title": "SLIK Deduplication and Checking",
+                    "epic": "External Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Perform SLIK credit checking and deduplication for the applicant."
+                },
+                {
+                    "no": 20,
+                    "issue_key": "TLR-34",
+                    "title": "SLIK Rules",
+                    "epic": "External Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Apply SLIK policy rules to the credit history results."
+                },
+                {
+                    "no": 21,
+                    "issue_key": "TLR-29",
+                    "title": "Internal Check Review (ICR) - SLIK Checking Deduplication",
+                    "epic": "External Checking",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Internal Check Reviewer (ICR)",
+                    "short_description": "ICR officer reviews internal checking results and decides whether to proceed."
+                }
+            ]
+        },
+        {
+            "id": "P4",
+            "name": "Supervisor Sales Review & EDD Distribution",
+            "order": 4,
+            "steps": [
+                {
+                    "no": 22,
+                    "issue_key": "TLR-12",
+                    "title": "Worklist - Supervisor Sales",
+                    "epic": "Worklist",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales Supervisor",
+                    "short_description": "Worklist - Supervisor Sales step in stage Initiation."
+                },
+                {
+                    "no": 23,
+                    "issue_key": "TLR-27",
+                    "title": "Submission Review - Supervisor Sales",
+                    "epic": "Customer Context (Flow 2 - Submission Review)",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales Supervisor",
+                    "short_description": "Supervisor validates sales submission completeness and eligibility."
+                },
+                {
+                    "no": 24,
+                    "issue_key": "TLR-35",
+                    "title": "Distribution Enhanced Due Diligence (EDD) - Supervisor Sales",
+                    "epic": "Enhanced Due Diligence",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales Supervisor",
+                    "short_description": "Supervisor distributes applications that require Enhanced Due Diligence."
+                },
+                {
+                    "no": 25,
+                    "issue_key": "TLR-36",
+                    "title": "Sendback - Supervisor Sales",
+                    "epic": "Sendback",
+                    "stage": "Initiation",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Sales Supervisor",
+                    "short_description": "Sendback - Supervisor Sales step in stage Initiation."
+                }
+            ]
+        },
+        {
+            "id": "P5",
+            "name": "Verification & Risk / Limit Assessment",
+            "order": 5,
+            "steps": [
+                {
+                    "no": 26,
+                    "issue_key": "TLR-53",
+                    "title": "Auto Assign",
+                    "epic": "Customer Context (Flow 3 - Credit Analyst & Approval)",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "System automatically assigns applications to the next available analyst."
+                },
+                {
+                    "no": 27,
+                    "issue_key": "TLR-54",
+                    "title": "Get Next Work",
+                    "epic": "Customer Context (Flow 3 - Credit Analyst & Approval)",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Pull next eligible application from the verification queue."
+                },
+                {
+                    "no": 28,
+                    "issue_key": "TLR-43",
+                    "title": "Worklist - Credit Analyst",
+                    "epic": "Worklist",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Display list of applications assigned to the credit analyst."
+                },
+                {
+                    "no": 29,
+                    "issue_key": "TLR-70",
+                    "title": "Sendback Action - Credit Analyst",
+                    "epic": "Sendback",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Sendback Action - Credit Analyst step in stage Verification."
+                },
+                {
+                    "no": 30,
+                    "issue_key": "TLR-40",
+                    "title": "Verification Strategy",
+                    "epic": "Verification",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Define which verification steps (phone, site, document) are required."
+                },
+                {
+                    "no": 31,
+                    "issue_key": "TLR-57",
+                    "title": "Verification Process",
+                    "epic": "Verification",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Execute the required verification activities."
+                },
+                {
+                    "no": 32,
+                    "issue_key": "TLR-52",
+                    "title": "Verification Result - Credit Analyst",
+                    "epic": "Verification",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Record consolidated verification result for the analyst."
+                },
+                {
+                    "no": 33,
+                    "issue_key": "TLR-39",
+                    "title": "Document Verification - Income Calculation",
+                    "epic": "Verification",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Calculate and verify customer income based on uploaded documents."
+                },
+                {
+                    "no": 34,
+                    "issue_key": "TLR-37",
+                    "title": "Term of Business Checking",
+                    "epic": "Verification",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Check customer against product Terms of Business (TOB) rules."
+                },
+                {
+                    "no": 35,
+                    "issue_key": "TLR-44",
+                    "title": "Limit Calculation",
+                    "epic": "Verification",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Calculate preliminary credit limit and tenor based on policy."
+                },
+                {
+                    "no": 36,
+                    "issue_key": "TLR-51",
+                    "title": "Limit Adjustment and Credit Structure",
+                    "epic": "Verification",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Analyst",
+                    "short_description": "Adjust credit limit and structure according to analysis and policy."
+                },
+                {
+                    "no": 37,
+                    "issue_key": "TLR-38",
+                    "title": "Credit Scoring Integration",
+                    "epic": "Verification",
+                    "stage": "Verification",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Call external/internal scoring engine and store score."
+                }
+            ]
+        },
+        {
+            "id": "P6",
+            "name": "Approval Decision",
+            "order": 6,
+            "steps": [
+                {
+                    "no": 38,
+                    "issue_key": "TLR-68",
+                    "title": "Tiering Credit Approval",
+                    "epic": "Customer Context (Flow 3 - Credit Analyst & Approval)",
+                    "stage": "Approval",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Approver",
+                    "short_description": "Determine approval level required based on limit, risk tier, and policy."
+                },
+                {
+                    "no": 39,
+                    "issue_key": "TLR-50",
+                    "title": "Worklist - Approval",
+                    "epic": "Worklist",
+                    "stage": "Approval",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Approver",
+                    "short_description": "Queue applications for approver review."
+                },
+                {
+                    "no": 40,
+                    "issue_key": "TLR-42",
+                    "title": "Credit Approval",
+                    "epic": "Customer Context (Flow 3 - Credit Analyst & Approval)",
+                    "stage": "Approval",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Approver",
+                    "short_description": "Approver reviews analysis and issues approve/reject/sendback decision."
+                },
+                {
+                    "no": 41,
+                    "issue_key": "TLR-56",
+                    "title": "Sendback - Approval",
+                    "epic": "Sendback",
+                    "stage": "Approval",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Approver",
+                    "short_description": "Sendback - Approval step in stage Approval."
+                }
+            ]
+        },
+        {
+            "id": "P7",
+            "name": "Contracting, Insurance & Disbursement",
+            "order": 7,
+            "steps": [
+                {
+                    "no": 42,
+                    "issue_key": "TLR-5",
+                    "title": "Worklist - Credit Operation Officer",
+                    "epic": "Worklist",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Officer",
+                    "short_description": "Show pending post-approval cases that need operational processing."
+                },
+                {
+                    "no": 43,
+                    "issue_key": "TLR-71",
+                    "title": "Sendback Action - Credit Operation Officer",
+                    "epic": "Sendback",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Officer",
+                    "short_description": "Sendback Action - Credit Operation Officer step in stage Administration."
+                },
+                {
+                    "no": 44,
+                    "issue_key": "TLR-45",
+                    "title": "Sendback - Credit Operation Officer",
+                    "epic": "Sendback",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Officer",
+                    "short_description": "Sendback - Credit Operation Officer step in stage Administration."
+                },
+                {
+                    "no": 45,
+                    "issue_key": "TLR-16",
+                    "title": "Generate & Send Order Letter (Insurance)",
+                    "epic": "Insurance",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Insurance / Third Party",
+                    "short_description": "Issue insurance order letter for the approved facility."
+                },
+                {
+                    "no": 46,
+                    "issue_key": "TLR-10",
+                    "title": "Review Kelengkapan Data & Syarat Kredit SKK",
+                    "epic": "Offering Letter",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation / Sales",
+                    "short_description": "Check completeness of data & requirements before generating SKK."
+                },
+                {
+                    "no": 47,
+                    "issue_key": "TLR-9",
+                    "title": "Get link SKK Confirmation Bisnis (under 500 million rupiah)",
+                    "epic": "Offering Letter",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation / Sales",
+                    "short_description": "Get link SKK Confirmation Bisnis (under 500 million rupiah) step in stage Administration."
+                },
+                {
+                    "no": 48,
+                    "issue_key": "TLR-13",
+                    "title": "Get link SKK Confirmation COP (above 500 million)",
+                    "epic": "Offering Letter",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation / Sales",
+                    "short_description": "Get link SKK Confirmation COP (above 500 million) step in stage Administration."
+                },
+                {
+                    "no": 49,
+                    "issue_key": "TLR-8",
+                    "title": "Generate SKK (Offering Letter)",
+                    "epic": "Offering Letter",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation / Sales",
+                    "short_description": "Generate SKK (offering letter) for customer confirmation."
+                },
+                {
+                    "no": 50,
+                    "issue_key": "TLR-15",
+                    "title": "Auto Cancel SKK Expired",
+                    "epic": "Offering Letter",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Automatically cancel SKK when it passes expiry date."
+                },
+                {
+                    "no": 51,
+                    "issue_key": "TLR-7",
+                    "title": "Worklist - Credit Operation Team Leader",
+                    "epic": "Worklist",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Team Leader",
+                    "short_description": "Team leader oversees and reviews credit operation tasks."
+                },
+                {
+                    "no": 52,
+                    "issue_key": "TLR-46",
+                    "title": "Sendback - Credit Operation Team Leader",
+                    "epic": "Sendback",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Team Leader",
+                    "short_description": "Sendback - Credit Operation Team Leader step in stage Administration."
+                },
+                {
+                    "no": 53,
+                    "issue_key": "TLR-47",
+                    "title": "Review Kelengkapan Data & Syarat Kredit PK (Review Data & Requirement for Loan Agreement)",
+                    "epic": "Loan Agreement",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Team Leader",
+                    "short_description": "Review PK (loan agreement) data & requirements before signing."
+                },
+                {
+                    "no": 54,
+                    "issue_key": "TLR-18",
+                    "title": "Generate PK (Agreement)",
+                    "epic": "Loan Agreement",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Team Leader",
+                    "short_description": "Generate loan agreement (PK) documents for signing."
+                },
+                {
+                    "no": 55,
+                    "issue_key": "TLR-58",
+                    "title": "Pre Disbursement",
+                    "epic": "Pre Disbursement",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Officer",
+                    "short_description": "Perform final checks before disbursing the loan."
+                },
+                {
+                    "no": 56,
+                    "issue_key": "TLR-20",
+                    "title": "Generate File CEMTEX (Text File)",
+                    "epic": "Disbursement",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Officer",
+                    "short_description": "Generate CEMTEX text file for core banking / disbursement system."
+                },
+                {
+                    "no": 57,
+                    "issue_key": "TLR-19",
+                    "title": "Disbursement (Credit Operation Officer)",
+                    "epic": "Disbursement",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Officer",
+                    "short_description": "Execute loan disbursement to customer account."
+                },
+                {
+                    "no": 58,
+                    "issue_key": "TLR-49",
+                    "title": "Disbursement (Team Leader)",
+                    "epic": "Disbursement",
+                    "stage": "Administration",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Credit Operation Team Leader",
+                    "short_description": "Disbursement (Team Leader) step in stage Administration."
+                }
+            ]
+        },
+        {
+            "id": "P8",
+            "name": "General & Supporting Services",
+            "order": 8,
+            "steps": [
+                {
+                    "no": 59,
+                    "issue_key": "TLR-59",
+                    "title": "Login",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Admin",
+                    "short_description": "Provide secure login for users into the LOS system."
+                },
+                {
+                    "no": 60,
+                    "issue_key": "TLR-64",
+                    "title": "Time Setting and Calculation",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Maintain system date/time and calculation baseline."
+                },
+                {
+                    "no": 61,
+                    "issue_key": "TLR-60",
+                    "title": "Business Parameter Maintenance - Risk",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Maintain risk-related parameters such as rules, scoring thresholds."
+                },
+                {
+                    "no": 62,
+                    "issue_key": "TLR-61",
+                    "title": "Business Parameter Maintenance - Product",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Maintain product configurations and parameters."
+                },
+                {
+                    "no": 63,
+                    "issue_key": "TLR-66",
+                    "title": "User and Role Management Admin Maker",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Admin",
+                    "short_description": "Create and approve application users and roles."
+                },
+                {
+                    "no": 64,
+                    "issue_key": "TLR-67",
+                    "title": "User and Role Management Admin Approver",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Admin",
+                    "short_description": "Create and approve application users and roles."
+                },
+                {
+                    "no": 65,
+                    "issue_key": "TLR-65",
+                    "title": "User Matrix",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Admin",
+                    "short_description": "Define which roles can access which functions."
+                },
+                {
+                    "no": 66,
+                    "issue_key": "TLR-55",
+                    "title": "Recontest Process",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Handle appeal/recontest requests for declined applications."
+                },
+                {
+                    "no": 67,
+                    "issue_key": "TLR-62",
+                    "title": "[Desktop] Advance Search",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Enable advanced search for applications and customers."
+                },
+                {
+                    "no": 68,
+                    "issue_key": "TLR-63",
+                    "title": "[Mobile] Advance Search",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Enable advanced search for applications and customers."
+                },
+                {
+                    "no": 69,
+                    "issue_key": "TLR-22",
+                    "title": "DMS (Document Management System)",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "Document Management System",
+                    "short_description": "Integrate with DMS for storing and retrieving documents."
+                },
+                {
+                    "no": 70,
+                    "issue_key": "TLR-69",
+                    "title": "Reporting",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Provide reporting and dashboard capabilities."
+                },
+                {
+                    "no": 71,
+                    "issue_key": "TLR-72",
+                    "title": "Task Management & Re-Assign",
+                    "epic": "General",
+                    "stage": "General",
+                    "mandatory": true,
+                    "included_in_rd": true,
+                    "business_role": "System / Related Officer",
+                    "short_description": "Support workload distribution and reassignment across users."
+                }
+            ]
+        }
+    ]
+}

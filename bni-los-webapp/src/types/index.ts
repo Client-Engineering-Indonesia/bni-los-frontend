@@ -6,7 +6,8 @@ export type ApplicationStatus =
     | 'Internal Checking'
     | 'External Checking'
     | 'EDD Required'
-    | 'Verification'
+    | 'Supervisor Review'
+    | 'Analyst Review'
     | 'Approval'
     | 'Approved'
     | 'Rejected'
@@ -34,6 +35,15 @@ export interface Application {
     updatedAt: string;
     assignedTo?: string; // Role or User ID
     notes?: string[];
+    salesId?: string;
+    nik?: string;
+    eddNotes?: string;
+    approverChecklist?: {
+        creditScoreChecked: boolean;
+        documentsVerified: boolean;
+        collateralValuation: boolean;
+        complianceCheck: boolean;
+    };
     disbursementDetails?: {
         accountNumber: string;
         bankName: string;
@@ -41,6 +51,7 @@ export interface Application {
         date: string;
         notes?: string;
     };
+    nationalIdFile?: string; // URL or filename
 }
 
 export interface User {
