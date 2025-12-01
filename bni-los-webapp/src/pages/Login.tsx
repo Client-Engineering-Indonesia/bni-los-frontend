@@ -10,6 +10,7 @@ export const Login = () => {
     const [salesId, setSalesId] = useState('');
     const [selectedRole, setSelectedRole] = useState('Auto-detect');
     const [rememberMe, setRememberMe] = useState(false);
+    const [password, setPassword] = useState('');
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,6 +88,17 @@ export const Login = () => {
                             placeholder="name@bni.co.id"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Password (Optional)</label>
+                        <input
+                            type="password"
+                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            placeholder="Enter password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                         />
                     </div>
 

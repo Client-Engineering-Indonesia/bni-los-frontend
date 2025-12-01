@@ -1,0 +1,32 @@
+[
+    {
+        "id": "u1",
+        "name": "Sales Officer 1",
+        "role": "Sales"
+    },
+    {
+        "id": "u2",
+        "name": "ICR Officer 1",
+        "role": "ICR"
+    },
+    {
+        "id": "u3",
+        "name": "Supervisor 1",
+        "role": "Supervisor"
+    },
+    {
+        "id": "u4",
+        "name": "Credit Analyst 1",
+        "role": "Analyst"
+    },
+    {
+        "id": "u5",
+        "name": "Approver 1",
+        "role": "Approver"
+    },
+    {
+        "id": "u6",
+        "name": "Ops Officer 1",
+        "role": "Operation"
+    }
+]

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import type { ApplicationStatus } from '../types';
-import { FileText, Clock, CheckCircle } from 'lucide-react';
+import type { ApplicationStatus, PKSCompany } from '../types';
+import { FileText, Clock, CheckCircle, Plus } from 'lucide-react';
 import clsx from 'clsx';
 
 const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
@@ -29,12 +29,20 @@ const StatusBadge = ({ status }: { status: ApplicationStatus }) => {
     );
 };
 
+// Format numbers with period separator (Indonesian format)
+const formatMoney = (amount: number): string => {
+    return `Rp ${amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+};
+
 export const Dashboard = () => {
     const { user } = useAuth();
-    const { applications, deleteApplication } = useData();
+    const { applications, deleteApplication, pksCompanies, addPKSCompany } = useData();
     const navigate = useNavigate();
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState<'applications' | 'pks'>('applications');
+    const [showAddCompanyModal, setShowAddCompanyModal] = useState(false);
+    const [newCompany, setNewCompany] = useState({ pksNumber: '', companyName: '' });
 
     if (!user) return null;
 
@@ -43,7 +51,6 @@ export const Dashboard = () => {
         let apps = applications;
         switch (user.role) {
             case 'Sales':
-                // Sales sees all their apps
                 break;
             case 'ICR':
                 apps = applications.filter(app => ['Submitted', 'Internal Checking', 'External Checking'].includes(app.status));
@@ -85,6 +92,21 @@ export const Dashboard = () => {
         { label: 'Completed', value: filteredApps.filter(a => a.status === 'Disbursed').length, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
     ];
 
+    const handleAddCompany = () => {
+        if (!newCompany.pksNumber || !newCompany.companyName) return;
+
+        const company: PKSCompany = {
+            id: `PKS-${Math.floor(Math.random() * 10000)}`,
+            pksNumber: newCompany.pksNumber,
+            companyName: newCompany.companyName,
+            createdAt: new Date().toISOString(),
+        };
+
+        addPKSCompany(company);
+        setNewCompany({ pksNumber: '', companyName: '' });
+        setShowAddCompanyModal(false);
+    };
+
     return (
         <div className="space-y-8">
             <div className="flex justify-between items-end">
@@ -121,67 +143,184 @@ export const Dashboard = () => {
                 ))}
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="p-6 border-b border-slate-100">
-                    <h2 className="font-bold text-slate-900">Worklist</h2>
+            {/* Tabs for Operations */}
+            {user.role === 'Operation' && (
+                <div className="border-b border-slate-200">
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => setActiveTab('applications')}
+                            className={clsx(
+                                "px-4 py-2 font-medium border-b-2 transition-colors",
+                                activeTab === 'applications'
+                                    ? "border-bni-teal text-bni-teal"
+                                    : "border-transparent text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Applications
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('pks')}
+                            className={clsx(
+                                "px-4 py-2 font-medium border-b-2 transition-colors",
+                                activeTab === 'pks'
+                                    ? "border-bni-teal text-bni-teal"
+                                    : "border-transparent text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            PKS Companies
+                        </button>
+                    </div>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Application ID</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Sales ID</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {filteredApps.map((app) => (
-                                <tr key={app.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{app.id}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">{app.salesId || '-'}</td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">
-                                        <div>{app.customerName}</div>
-                                        <div className="text-xs text-slate-400">{app.customerId}</div>
-                                        {app.nik && <div className="text-xs text-slate-400">NIK: {app.nik}</div>}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">
-                                        Rp {app.loanAmount.toLocaleString('id-ID')}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <StatusBadge status={app.status} />
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-slate-600">
-                                        {new Date(app.updatedAt).toLocaleDateString()}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => navigate(`/application/${app.id}`)}
-                                                className="text-bni-teal hover:text-bni-orange font-medium text-sm"
-                                            >
-                                                View Details
-                                            </button>
-                                            {user.role === 'Sales' && (
-                                                <button
-                                                    onClick={() => setDeleteConfirm(app.id)}
-                                                    className="text-red-600 hover:text-red-700 font-medium text-sm"
-                                                >
-                                                    Delete
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            )}
 
+            {/* Applications Table */}
+            {(user.role !== 'Operation' || activeTab === 'applications') && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-6 border-b border-slate-100">
+                        <h2 className="font-bold text-slate-900">Worklist</h2>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Application ID</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Sales ID</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                                    <th className="px-6 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filteredApps.map((app) => (
+                                    <tr key={app.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-sm font-medium text-slate-900">{app.id}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{app.salesId || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">
+                                            <div>{app.customerName}</div>
+                                            <div className="text-xs text-slate-400">{app.customerId}</div>
+                                            {app.nik && <div className="text-xs text-slate-400">NIK: {app.nik}</div>}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">
+                                            {formatMoney(app.loanAmount)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <StatusBadge status={app.status} />
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">
+                                            {new Date(app.updatedAt).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => navigate(`/application/${app.id}`)}
+                                                    className="text-bni-teal hover:text-bni-orange font-medium text-sm"
+                                                >
+                                                    View Details
+                                                </button>
+                                                {user.role === 'Sales' && (
+                                                    <button
+                                                        onClick={() => setDeleteConfirm(app.id)}
+                                                        className="text-red-600 hover:text-red-700 font-medium text-sm"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* PKS Companies Table (Operations only) */}
+            {user.role === 'Operation' && activeTab === 'pks' && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <h2 className="font-bold text-slate-900">PKS Companies</h2>
+                        <button
+                            onClick={() => setShowAddCompanyModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-bni-teal text-white rounded-lg hover:bg-teal-700"
+                        >
+                            <Plus size={18} />
+                            Add New Company
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">PKS Number</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Company Name</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created Date</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {pksCompanies.map((company) => (
+                                    <tr key={company.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 text-sm font-medium text-slate-900">{company.pksNumber}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.companyName}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">
+                                            {new Date(company.createdAt).toLocaleDateString()}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Company Modal */}
+            {showAddCompanyModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                        <h2 className="text-xl font-bold text-slate-900 mb-4">Add New PKS Company</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">PKS Number</label>
+                                <input
+                                    type="text"
+                                    value={newCompany.pksNumber}
+                                    onChange={(e) => setNewCompany({ ...newCompany, pksNumber: e.target.value })}
+                                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                    placeholder="e.g. PKS-2024-009"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
+                                <input
+                                    type="text"
+                                    value={newCompany.companyName}
+                                    onChange={(e) => setNewCompany({ ...newCompany, companyName: e.target.value })}
+                                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                    placeholder="e.g. PT Example Company"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                onClick={() => setShowAddCompanyModal(false)}
+                                className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddCompany}
+                                className="px-4 py-2 bg-bni-teal text-white rounded-lg font-medium hover:bg-teal-700"
+                            >
+                                Add Company
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
             {deleteConfirm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">

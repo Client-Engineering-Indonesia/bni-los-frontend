@@ -6,44 +6,70 @@ import type { Application } from '../types';
 
 export const NewApplication = () => {
     const navigate = useNavigate();
-    const { addApplication } = useData();
+    const { addApplication, pksCompanies, options } = useData();
     const [loading, setLoading] = useState(false);
     const [amount, setAmount] = useState(0);
+    const [selectedPKS, setSelectedPKS] = useState('');
+    const [payrollAccount, setPayrollAccount] = useState(false);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
 
-        // Capture form values before async call
         const form = e.currentTarget;
 
+        // Get all form inputs
+        const getInputValue = (name: string) => {
+            const element = form.elements.namedItem(name);
+            return element instanceof HTMLInputElement ? element.value : '';
+        };
+
         const fileInput = form.elements.namedItem('nationalIdFile') as HTMLInputElement;
-        const nameInput = form.elements.namedItem('name') as HTMLInputElement;
-        const salesIdInput = form.elements.namedItem('salesId') as HTMLInputElement;
+        const npwpInput = form.elements.namedItem('npwpFile') as HTMLInputElement;
         const tenorInput = form.elements.namedItem('tenor') as HTMLSelectElement;
 
-        const file = fileInput?.files?.[0];
-        const nationalIdFile = file ? URL.createObjectURL(file) : undefined;
+        const nationalIdFile = fileInput?.files?.[0] ? URL.createObjectURL(fileInput.files[0]) : undefined;
+        const npwpFile = npwpInput?.files?.[0] ? URL.createObjectURL(npwpInput.files[0]) : undefined;
 
-        const customerName = nameInput.value;
-        const nik = form.elements.namedItem('nik') instanceof HTMLInputElement ? (form.elements.namedItem('nik') as HTMLInputElement).value : '';
-        const salesId = salesIdInput.value;
-        const loanAmount = amount;
-        const tenor = parseInt(tenorInput.value, 10);
+        const selectedCompany = pksCompanies.find(c => c.pksNumber === selectedPKS);
 
         setTimeout(() => {
             const newApp: Application = {
                 id: `APP-${Math.floor(Math.random() * 10000)}`,
                 customerId: `CUST-${Math.floor(Math.random() * 10000)}`,
-                customerName,
-                nik,
-                salesId,
-                loanAmount,
-                tenor,
+                customerName: getInputValue('name'),
+                nik: getInputValue('nik'),
+                salesId: getInputValue('salesId'),
+                loanAmount: amount,
+                tenor: parseInt(tenorInput.value, 10),
                 status: 'Submitted',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 nationalIdFile,
+                // New fields
+                loanId: `LN-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
+                pksNumber: selectedPKS,
+                pksCompanyName: selectedCompany?.companyName,
+                kreditProduct: getInputValue('kreditProduct'),
+                npwpFile,
+                debtorOccupation: getInputValue('debtorOccupation'),
+                emergencyContact: {
+                    name: getInputValue('emergencyName'),
+                    phone: getInputValue('emergencyPhone'),
+                    relationship: getInputValue('emergencyRelationship'),
+                },
+                bankingInfo: {
+                    bankName: getInputValue('bankName'),
+                    accountNumber: getInputValue('accountNumber'),
+                    payrollAccount,
+                    payrollAccountNumber: payrollAccount ? getInputValue('payrollAccountNumber') : undefined,
+                    existingLoans: getInputValue('existingLoans'),
+                    disbursementAccount: {
+                        recipientName: getInputValue('disbursementRecipientName'),
+                        bankName: getInputValue('disbursementBankName'),
+                        accountNumber: getInputValue('disbursementAccountNumber'),
+                    },
+                },
             };
 
             addApplication(newApp);
@@ -53,18 +79,47 @@ export const NewApplication = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-900">New Application</h1>
                 <p className="text-slate-500">Initiate a new loan application for a customer.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 space-y-6">
-                <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Customer Information</h3>
+            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 space-y-8">
 
+                {/* Loan Information */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Loan Information</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
+                        {/* Loan ID is auto-generated */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">PKS Number & Company</label>
+                            <select
+                                value={selectedPKS}
+                                onChange={(e) => setSelectedPKS(e.target.value)}
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            >
+                                <option value="">Select PKS Company</option>
+                                {pksCompanies.map((company) => (
+                                    <option key={company.id} value={company.pksNumber}>
+                                        {company.pksNumber} - {company.companyName}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Kredit Product</label>
+                            <select
+                                name="kreditProduct"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            >
+                                <option value="">Select Product</option>
+                                {options.productOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Sales ID</label>
                             <input
                                 name="salesId"
@@ -74,6 +129,13 @@ export const NewApplication = () => {
                                 placeholder="e.g. S-12345"
                             />
                         </div>
+                    </div>
+                </div>
+
+                {/* Customer Information */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Customer Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                             <input
@@ -81,86 +143,230 @@ export const NewApplication = () => {
                                 required
                                 type="text"
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                                placeholder="e.g. Budi Santoso"
+                                placeholder="e.g. John Doe"
                             />
                         </div>
-
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">NIK</label>
                             <input
                                 name="nik"
-                                required
                                 type="text"
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                                placeholder="16 digit NIK"
+                                placeholder="16-digit NIK"
                             />
                         </div>
-
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">National ID (KTP) Document</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Debtor Occupation</label>
+                            <input
+                                name="debtorOccupation"
+                                type="text"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="e.g. Business Owner, Manager, etc."
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Emergency Contact */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Emergency Contact</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Contact Name</label>
+                            <input
+                                name="emergencyName"
+                                type="text"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="Emergency contact name"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+                            <input
+                                name="emergencyPhone"
+                                type="tel"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="+62 xxx xxxx xxxx"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Relationship</label>
+                            <select
+                                name="emergencyRelationship"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            >
+                                <option value="">Select Relationship</option>
+                                {options.relationshipOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Document Uploads */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Documents</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">National ID (KTP)</label>
                             <input
                                 name="nationalIdFile"
                                 type="file"
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
+                                accept="image/*,.pdf"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
                             />
-                            <p className="text-xs text-slate-500 mt-1">Upload PDF, JPG, or PNG (Max 5MB)</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">NPWP</label>
+                            <input
+                                name="npwpFile"
+                                type="file"
+                                accept="image/*,.pdf"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            />
                         </div>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                        <input
-                            name="phone"
-                            required
-                            type="tel"
-                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                            placeholder="0812..."
-                        />
-                    </div>
                 </div>
 
-                <div className="space-y-4 pt-4">
+                {/* Loan Details */}
+                <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Loan Details</h3>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Loan Amount (IDR)</label>
-                        <MoneyInput
-                            name="amount"
-                            required
-                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                            value={amount}
-                            onChange={setAmount}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Tenor (Months)</label>
-                        <select
-                            name="tenor"
-                            className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                        >
-                            <option value="12">12 Months</option>
-                            <option value="24">24 Months</option>
-                            <option value="36">36 Months</option>
-                            <option value="48">48 Months</option>
-                            <option value="60">60 Months</option>
-                        </select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Loan Amount (IDR)</label>
+                            <MoneyInput
+                                name="amount"
+                                required
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                value={amount}
+                                onChange={setAmount}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Tenor (Months)</label>
+                            <select
+                                name="tenor"
+                                required
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            >
+                                <option value="">Select Tenor</option>
+                                {options.tenorOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <div className="pt-6 flex items-center justify-end gap-3">
+                {/* Banking Information */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Banking Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
+                            <select
+                                name="bankName"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            >
+                                <option value="">Select Bank</option>
+                                {options.bankOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
+                            <input
+                                name="accountNumber"
+                                type="text"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="Account number"
+                            />
+                        </div>
+                        <div className="col-span-2">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={payrollAccount}
+                                    onChange={(e) => setPayrollAccount(e.target.checked)}
+                                    className="w-4 h-4 text-bni-teal border-slate-300 rounded focus:ring-bni-teal"
+                                />
+                                <span className="text-sm font-medium text-slate-700">Has Payroll Account</span>
+                            </label>
+                        </div>
+                        {payrollAccount && (
+                            <div className="col-span-2">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Payroll Account Number</label>
+                                <input
+                                    name="payrollAccountNumber"
+                                    type="text"
+                                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                    placeholder="Payroll account number"
+                                />
+                            </div>
+                        )}
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Existing Loans / Monthly Installments</label>
+                            <textarea
+                                name="existingLoans"
+                                rows={2}
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="Describe existing loans or monthly installment obligations"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Preferred Disbursement Account */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Preferred Disbursement Account</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Recipient Name</label>
+                            <input
+                                name="disbursementRecipientName"
+                                type="text"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="Account holder name"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
+                            <select
+                                name="disbursementBankName"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                            >
+                                <option value="">Select Bank</option>
+                                {options.bankOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
+                            <input
+                                name="disbursementAccountNumber"
+                                type="text"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="Account number"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-6 border-t">
                     <button
                         type="button"
                         onClick={() => navigate('/')}
-                        className="px-6 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium transition-colors"
+                        className="px-6 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50"
                     >
                         Cancel
                     </button>
                     <button
                         type="submit"
                         disabled={loading}
-                        className="px-6 py-2 bg-bni-orange text-white rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50"
+                        className="px-6 py-2 bg-bni-teal text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
                     >
                         {loading ? 'Submitting...' : 'Submit Application'}
                     </button>

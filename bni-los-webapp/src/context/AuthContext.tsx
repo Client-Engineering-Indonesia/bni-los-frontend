@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { Role, User } from '../types';
-import { MOCK_USERS } from '../data/mockData';
+import usersData from '../data/users.json';
 
 interface AuthContextType {
     user: User | null;
@@ -18,14 +18,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const login = (role: Role) => {
         setBaseRole(role);
-        const mockUser = MOCK_USERS.find(u => u.role === role);
+        const mockUser = (usersData as User[]).find(u => u.role === role);
         if (mockUser) {
             setUser(mockUser);
         }
     };
 
     const switchRole = (role: Role) => {
-        const mockUser = MOCK_USERS.find(u => u.role === role);
+        const mockUser = (usersData as User[]).find(u => u.role === role);
         if (mockUser) {
             setUser(mockUser);
         }

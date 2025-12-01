@@ -24,6 +24,13 @@ export interface Customer {
     income: number;
 }
 
+export interface PKSCompany {
+    id: string;
+    pksNumber: string;
+    companyName: string;
+    createdAt: string;
+}
+
 export interface Application {
     id: string;
     customerId: string;
@@ -52,6 +59,30 @@ export interface Application {
         notes?: string;
     };
     nationalIdFile?: string; // URL or filename
+    // New fields
+    loanId?: string;
+    pksNumber?: string;
+    pksCompanyName?: string;
+    kreditProduct?: string; // BNI Fleksi or others
+    npwpFile?: string;
+    debtorOccupation?: string;
+    emergencyContact?: {
+        name: string;
+        phone: string;
+        relationship: string;
+    };
+    bankingInfo?: {
+        bankName: string;
+        accountNumber: string;
+        payrollAccount: boolean;
+        payrollAccountNumber?: string;
+        existingLoans?: string;
+        disbursementAccount?: {
+            recipientName: string;
+            bankName: string;
+            accountNumber: string;
+        };
+    };
 }
 
 export interface User {

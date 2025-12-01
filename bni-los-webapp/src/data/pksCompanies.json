@@ -1,0 +1,50 @@
+[
+    {
+        "id": "PKS-001",
+        "pksNumber": "PKS-2024-001",
+        "companyName": "PT Maju Jaya Sejahtera",
+        "createdAt": "2024-01-15T08:00:00Z"
+    },
+    {
+        "id": "PKS-002",
+        "pksNumber": "PKS-2024-002",
+        "companyName": "PT Berkah Mandiri",
+        "createdAt": "2024-01-20T08:00:00Z"
+    },
+    {
+        "id": "PKS-003",
+        "pksNumber": "PKS-2024-003",
+        "companyName": "CV Sentosa Abadi",
+        "createdAt": "2024-02-01T08:00:00Z"
+    },
+    {
+        "id": "PKS-004",
+        "pksNumber": "PKS-2024-004",
+        "companyName": "PT Nusantara Terang",
+        "createdAt": "2024-02-10T08:00:00Z"
+    },
+    {
+        "id": "PKS-005",
+        "pksNumber": "PKS-2024-005",
+        "companyName": "PT Karya Bersama Indonesia",
+        "createdAt": "2024-03-01T08:00:00Z"
+    },
+    {
+        "id": "PKS-006",
+        "pksNumber": "PKS-2024-006",
+        "companyName": "CV Sukses Makmur",
+        "createdAt": "2024-03-15T08:00:00Z"
+    },
+    {
+        "id": "PKS-007",
+        "pksNumber": "PKS-2024-007",
+        "companyName": "PT Global Indo Prima",
+        "createdAt": "2024-04-01T08:00:00Z"
+    },
+    {
+        "id": "PKS-008",
+        "pksNumber": "PKS-2024-008",
+        "companyName": "PT Wijaya Kusuma",
+        "createdAt": "2024-04-20T08:00:00Z"
+    }
+]

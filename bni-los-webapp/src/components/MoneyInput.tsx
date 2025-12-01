@@ -13,8 +13,12 @@ export const MoneyInput: React.FC<MoneyInputProps> = ({ value, onChange, classNa
         onChange(numericValue);
     };
 
-    // Format for display
-    const displayValue = value ? `Rp ${value.toLocaleString('id-ID')}` : '';
+    // Format for display with period as thousand separator
+    const formatWithPeriod = (num: number): string => {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    const displayValue = value ? `Rp ${formatWithPeriod(value)}` : '';
 
     return (
         <input

@@ -9,7 +9,7 @@ import { MoneyInput } from '../components/MoneyInput';
 export const ApplicationDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { getApplication, updateApplicationStatus, deleteApplication } = useData();
+    const { getApplication, updateApplicationStatus, deleteApplication, pksCompanies, options } = useData();
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -30,7 +30,29 @@ export const ApplicationDetail = () => {
         nik: '',
         loanAmount: 0,
         tenor: 12,
-        nationalIdFile: undefined as string | undefined
+        nationalIdFile: undefined as string | undefined,
+        // New fields
+        pksNumber: '',
+        kreditProduct: '',
+        debtorOccupation: '',
+        npwpFile: undefined as string | undefined,
+        emergencyContact: {
+            name: '',
+            phone: '',
+            relationship: ''
+        },
+        bankingInfo: {
+            bankName: '',
+            accountNumber: '',
+            payrollAccount: false,
+            payrollAccountNumber: '',
+            existingLoans: '',
+            disbursementAccount: {
+                recipientName: '',
+                bankName: '',
+                accountNumber: ''
+            }
+        }
     });
 
     const application = getApplication(id || '');
@@ -46,7 +68,24 @@ export const ApplicationDetail = () => {
             nik: application.nik || '',
             loanAmount: application.loanAmount,
             tenor: application.tenor,
-            nationalIdFile: application.nationalIdFile
+            nationalIdFile: application.nationalIdFile,
+            pksNumber: application.pksNumber || '',
+            kreditProduct: application.kreditProduct || '',
+            debtorOccupation: application.debtorOccupation || '',
+            npwpFile: application.npwpFile,
+            emergencyContact: application.emergencyContact || { name: '', phone: '', relationship: '' },
+            bankingInfo: {
+                bankName: application.bankingInfo?.bankName || '',
+                accountNumber: application.bankingInfo?.accountNumber || '',
+                payrollAccount: application.bankingInfo?.payrollAccount || false,
+                payrollAccountNumber: application.bankingInfo?.payrollAccountNumber || '',
+                existingLoans: application.bankingInfo?.existingLoans || '',
+                disbursementAccount: application.bankingInfo?.disbursementAccount || {
+                    recipientName: '',
+                    bankName: '',
+                    accountNumber: ''
+                }
+            }
         });
         setIsEditing(true);
     };
@@ -74,6 +113,13 @@ export const ApplicationDetail = () => {
             loanAmount: editForm.loanAmount,
             tenor: editForm.tenor,
             nationalIdFile: editForm.nationalIdFile,
+            pksNumber: editForm.pksNumber,
+            pksCompanyName: pksCompanies.find(p => p.pksNumber === editForm.pksNumber)?.companyName,
+            kreditProduct: editForm.kreditProduct,
+            debtorOccupation: editForm.debtorOccupation,
+            npwpFile: editForm.npwpFile,
+            emergencyContact: editForm.emergencyContact,
+            bankingInfo: editForm.bankingInfo,
             eddNotes: undefined // Clear EDD notes on resubmit
         });
     };
@@ -198,6 +244,13 @@ export const ApplicationDetail = () => {
                             >
                                 <CheckCircle size={18} /> Submit to Supervisor
                             </button>
+                            <button
+                                onClick={() => handleAction('Rejected')}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                                <XCircle size={18} /> Reject
+                            </button>
                         </div>
                     );
                 }
@@ -220,6 +273,13 @@ export const ApplicationDetail = () => {
                             >
                                 <AlertTriangle size={18} /> Request EDD
                             </button>
+                            <button
+                                onClick={() => handleAction('Rejected')}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                                <XCircle size={18} /> Reject
+                            </button>
                         </div>
                     );
                 }
@@ -234,6 +294,13 @@ export const ApplicationDetail = () => {
                                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                             >
                                 <CheckCircle size={18} /> Submit for Approval
+                            </button>
+                            <button
+                                onClick={() => handleAction('Rejected')}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                                <XCircle size={18} /> Reject
                             </button>
                         </div>
                     );
@@ -324,16 +391,79 @@ export const ApplicationDetail = () => {
                     </div>
                 )}
 
-                <div className="p-8 grid grid-cols-2 gap-8">
+                <div className="p-8 space-y-8">
+                    {/* Loan Information */}
                     <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4">Customer Information</h3>
-                        <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Loan Information</h3>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-sm text-slate-500">Loan ID</label>
+                                {isEditing ? (
+                                    <input
+                                        disabled
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded bg-slate-50 text-slate-500"
+                                        value={application.loanId || application.id}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.loanId || application.id}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">PKS Number & Company</label>
+                                {isEditing ? (
+                                    <select
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.pksNumber}
+                                        onChange={e => setEditForm({ ...editForm, pksNumber: e.target.value })}
+                                    >
+                                        <option value="">Select PKS Company</option>
+                                        {pksCompanies.map((company) => (
+                                            <option key={company.id} value={company.pksNumber}>
+                                                {company.pksNumber} - {company.companyName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="font-medium text-slate-900">
+                                        {application.pksNumber ? `${application.pksNumber} - ${application.pksCompanyName}` : '-'}
+                                    </p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Kredit Product</label>
+                                {isEditing ? (
+                                    <select
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.kreditProduct}
+                                        onChange={e => setEditForm({ ...editForm, kreditProduct: e.target.value })}
+                                    >
+                                        <option value="">Select Product</option>
+                                        {options.productOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.kreditProduct || '-'}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Sales ID</label>
+                                <p className="font-medium text-slate-900">{application.salesId || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Customer Information */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Customer Information</h3>
+                        <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <label className="text-sm text-slate-500">Full Name</label>
                                 {isEditing ? (
                                     <input
                                         type="text"
-                                        className="w-full px-3 py-1 border border-slate-200 rounded"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
                                         value={editForm.customerName}
                                         onChange={e => setEditForm({ ...editForm, customerName: e.target.value })}
                                     />
@@ -346,7 +476,7 @@ export const ApplicationDetail = () => {
                                 {isEditing ? (
                                     <input
                                         type="text"
-                                        className="w-full px-3 py-1 border border-slate-200 rounded"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
                                         value={editForm.nik}
                                         onChange={e => setEditForm({ ...editForm, nik: e.target.value })}
                                     />
@@ -355,7 +485,87 @@ export const ApplicationDetail = () => {
                                 )}
                             </div>
                             <div>
-                                <label className="text-sm text-slate-500">National ID Document</label>
+                                <label className="text-sm text-slate-500">Debtor Occupation</label>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.debtorOccupation}
+                                        onChange={e => setEditForm({ ...editForm, debtorOccupation: e.target.value })}
+                                        placeholder="e.g. Business Owner, Manager, etc."
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.debtorOccupation || '-'}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Emergency Contact */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Emergency Contact</h3>
+                        <div className="grid grid-cols-3 gap-6">
+                            <div>
+                                <label className="text-sm text-slate-500">Contact Name</label>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.emergencyContact?.name}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            emergencyContact: { ...editForm.emergencyContact, name: e.target.value }
+                                        })}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.emergencyContact?.name || '-'}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Phone Number</label>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.emergencyContact?.phone}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            emergencyContact: { ...editForm.emergencyContact, phone: e.target.value }
+                                        })}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.emergencyContact?.phone || '-'}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Relationship</label>
+                                {isEditing ? (
+                                    <select
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.emergencyContact?.relationship}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            emergencyContact: { ...editForm.emergencyContact, relationship: e.target.value }
+                                        })}
+                                    >
+                                        <option value="">Select Relationship</option>
+                                        {options.relationshipOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.emergencyContact?.relationship || '-'}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Documents */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Documents</h3>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-sm text-slate-500">National ID (KTP)</label>
                                 {isEditing ? (
                                     <div className="mt-1">
                                         <input
@@ -372,29 +582,60 @@ export const ApplicationDetail = () => {
                                         {editForm.nationalIdFile && <p className="text-xs text-green-600 mt-1">New file selected</p>}
                                     </div>
                                 ) : (
-                                    application.nationalIdFile && (
+                                    application.nationalIdFile ? (
                                         <a
                                             href={application.nationalIdFile}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="block font-medium text-bni-teal hover:underline mt-1"
+                                            className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
                                         >
-                                            View Document
+                                            <FileText size={16} /> View Document
                                         </a>
-                                    )
+                                    ) : <p className="text-slate-400 italic">No document uploaded</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">NPWP</label>
+                                {isEditing ? (
+                                    <div className="mt-1">
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.jpg,.jpeg,.png"
+                                            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    setEditForm({ ...editForm, npwpFile: URL.createObjectURL(file) });
+                                                }
+                                            }}
+                                        />
+                                        {editForm.npwpFile && <p className="text-xs text-green-600 mt-1">New file selected</p>}
+                                    </div>
+                                ) : (
+                                    application.npwpFile ? (
+                                        <a
+                                            href={application.npwpFile}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                                        >
+                                            <FileText size={16} /> View Document
+                                        </a>
+                                    ) : <p className="text-slate-400 italic">No document uploaded</p>
                                 )}
                             </div>
                         </div>
                     </div>
 
+                    {/* Loan Details */}
                     <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4">Loan Details</h3>
-                        <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Loan Details</h3>
+                        <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <label className="text-sm text-slate-500">Loan Amount</label>
                                 {isEditing ? (
                                     <MoneyInput
-                                        className="w-full px-3 py-1 border border-slate-200 rounded"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
                                         value={editForm.loanAmount}
                                         onChange={val => setEditForm({ ...editForm, loanAmount: val })}
                                     />
@@ -406,18 +647,180 @@ export const ApplicationDetail = () => {
                                 <label className="text-sm text-slate-500">Tenor</label>
                                 {isEditing ? (
                                     <select
-                                        className="w-full px-3 py-1 border border-slate-200 rounded"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
                                         value={editForm.tenor}
                                         onChange={e => setEditForm({ ...editForm, tenor: Number(e.target.value) })}
                                     >
-                                        <option value="12">12 Months</option>
-                                        <option value="24">24 Months</option>
-                                        <option value="36">36 Months</option>
-                                        <option value="48">48 Months</option>
-                                        <option value="60">60 Months</option>
+                                        {options.tenorOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
                                     </select>
                                 ) : (
                                     <p className="font-medium text-slate-900">{application.tenor} Months</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Banking Information */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Banking Information</h3>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-sm text-slate-500">Bank Name</label>
+                                {isEditing ? (
+                                    <select
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.bankingInfo?.bankName}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            bankingInfo: { ...editForm.bankingInfo, bankName: e.target.value }
+                                        })}
+                                    >
+                                        <option value="">Select Bank</option>
+                                        {options.bankOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.bankingInfo?.bankName || '-'}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Account Number</label>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.bankingInfo?.accountNumber}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            bankingInfo: { ...editForm.bankingInfo, accountNumber: e.target.value }
+                                        })}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.bankingInfo?.accountNumber || '-'}</p>
+                                )}
+                            </div>
+                            <div className="col-span-2">
+                                <label className="text-sm text-slate-500">Payroll Account</label>
+                                {isEditing ? (
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <input
+                                            type="checkbox"
+                                            checked={editForm.bankingInfo?.payrollAccount}
+                                            onChange={e => setEditForm({
+                                                ...editForm,
+                                                bankingInfo: { ...editForm.bankingInfo, payrollAccount: e.target.checked }
+                                            })}
+                                            className="w-4 h-4 text-bni-teal border-slate-300 rounded focus:ring-bni-teal"
+                                        />
+                                        <span className="text-sm font-medium text-slate-700">Has Payroll Account</span>
+                                    </div>
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.bankingInfo?.payrollAccount ? 'Yes' : 'No'}</p>
+                                )}
+                            </div>
+                            {(isEditing ? editForm.bankingInfo?.payrollAccount : application.bankingInfo?.payrollAccount) && (
+                                <div className="col-span-2">
+                                    <label className="text-sm text-slate-500">Payroll Account Number</label>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded"
+                                            value={editForm.bankingInfo?.payrollAccountNumber}
+                                            onChange={e => setEditForm({
+                                                ...editForm,
+                                                bankingInfo: { ...editForm.bankingInfo, payrollAccountNumber: e.target.value }
+                                            })}
+                                        />
+                                    ) : (
+                                        <p className="font-medium text-slate-900">{application.bankingInfo?.payrollAccountNumber || '-'}</p>
+                                    )}
+                                </div>
+                            )}
+                            <div className="col-span-2">
+                                <label className="text-sm text-slate-500">Existing Loans</label>
+                                {isEditing ? (
+                                    <textarea
+                                        rows={2}
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.bankingInfo?.existingLoans}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            bankingInfo: { ...editForm.bankingInfo, existingLoans: e.target.value }
+                                        })}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.bankingInfo?.existingLoans || '-'}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Preferred Disbursement Account */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Preferred Disbursement Account</h3>
+                        <div className="grid grid-cols-3 gap-6">
+                            <div>
+                                <label className="text-sm text-slate-500">Recipient Name</label>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.bankingInfo?.disbursementAccount?.recipientName}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            bankingInfo: {
+                                                ...editForm.bankingInfo,
+                                                disbursementAccount: { ...editForm.bankingInfo.disbursementAccount, recipientName: e.target.value }
+                                            }
+                                        })}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.bankingInfo?.disbursementAccount?.recipientName || '-'}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Bank Name</label>
+                                {isEditing ? (
+                                    <select
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.bankingInfo?.disbursementAccount?.bankName}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            bankingInfo: {
+                                                ...editForm.bankingInfo,
+                                                disbursementAccount: { ...editForm.bankingInfo.disbursementAccount, bankName: e.target.value }
+                                            }
+                                        })}
+                                    >
+                                        <option value="">Select Bank</option>
+                                        {options.bankOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.bankingInfo?.disbursementAccount?.bankName || '-'}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Account Number</label>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.bankingInfo?.disbursementAccount?.accountNumber}
+                                        onChange={e => setEditForm({
+                                            ...editForm,
+                                            bankingInfo: {
+                                                ...editForm.bankingInfo,
+                                                disbursementAccount: { ...editForm.bankingInfo.disbursementAccount, accountNumber: e.target.value }
+                                            }
+                                        })}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">{application.bankingInfo?.disbursementAccount?.accountNumber || '-'}</p>
                                 )}
                             </div>
                         </div>
@@ -574,13 +977,12 @@ export const ApplicationDetail = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
-                                    <input
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Amount (IDR)</label>
+                                    <MoneyInput
                                         required
-                                        type="number"
                                         className="w-full px-3 py-2 border border-slate-200 rounded-lg"
                                         value={disbursementForm.amount}
-                                        onChange={e => setDisbursementForm({ ...disbursementForm, amount: Number(e.target.value) })}
+                                        onChange={(value) => setDisbursementForm({ ...disbursementForm, amount: value })}
                                     />
                                 </div>
                                 <div>
