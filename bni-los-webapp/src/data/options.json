@@ -71,36 +71,36 @@
     ],
     "relationshipOptions": [
         {
-            "value": "Suami",
-            "label": "Suami"
+            "value": "Husband",
+            "label": "Husband"
         },
         {
-            "value": "Istri",
-            "label": "Istri"
+            "value": "Wife",
+            "label": "Wife"
         },
         {
-            "value": "Ayah",
-            "label": "Ayah"
+            "value": "Father",
+            "label": "Father"
         },
         {
-            "value": "Ibu",
-            "label": "Ibu"
+            "value": "Mother",
+            "label": "Mother"
         },
         {
-            "value": "Kakak",
-            "label": "Kakak"
+            "value": "Older Sibling",
+            "label": "Older Sibling"
         },
         {
-            "value": "Adik",
-            "label": "Adik"
+            "value": "Younger Sibling",
+            "label": "Younger Sibling"
         },
         {
-            "value": "Anak",
-            "label": "Anak"
+            "value": "Child",
+            "label": "Child"
         },
         {
-            "value": "Lainnya",
-            "label": "Lainnya"
+            "value": "Others",
+            "label": "Others"
         }
     ],
     "bankOptions": [

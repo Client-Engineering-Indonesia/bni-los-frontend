@@ -9,8 +9,22 @@ export const NewApplication = () => {
     const { addApplication, pksCompanies, options } = useData();
     const [loading, setLoading] = useState(false);
     const [amount, setAmount] = useState(0);
+    const [income, setIncome] = useState(0);
     const [selectedPKS, setSelectedPKS] = useState('');
     const [payrollAccount, setPayrollAccount] = useState(false);
+
+    // State for "Others" inputs
+    const [selectedProduct, setSelectedProduct] = useState('');
+    const [otherProduct, setOtherProduct] = useState('');
+
+    const [selectedOccupation, setSelectedOccupation] = useState('');
+    const [otherOccupation, setOtherOccupation] = useState('');
+
+    const [selectedRelationship, setSelectedRelationship] = useState('');
+    const [otherRelationship, setOtherRelationship] = useState('');
+
+    const [selectedBank, setSelectedBank] = useState('');
+    const [otherBank, setOtherBank] = useState('');
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -50,16 +64,18 @@ export const NewApplication = () => {
                 loanId: `LN-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
                 pksNumber: selectedPKS,
                 pksCompanyName: selectedCompany?.companyName,
-                kreditProduct: getInputValue('kreditProduct'),
+                kreditProduct: getInputValue('kreditProduct') === 'Other' ? otherProduct : getInputValue('kreditProduct'),
                 npwpFile,
-                debtorOccupation: getInputValue('debtorOccupation'),
+                debtorOccupation: getInputValue('debtorOccupation') === 'Lainnya' ? otherOccupation : getInputValue('debtorOccupation'),
                 emergencyContact: {
                     name: getInputValue('emergencyName'),
                     phone: getInputValue('emergencyPhone'),
-                    relationship: getInputValue('emergencyRelationship'),
+                    relationship: getInputValue('emergencyRelationship') === 'Others' ? otherRelationship : getInputValue('emergencyRelationship'),
                 },
+                income: income,
+                yearsOfService: Number(getInputValue('yearsOfService')),
                 bankingInfo: {
-                    bankName: getInputValue('bankName'),
+                    bankName: getInputValue('bankName') === 'Lainnya' ? otherBank : getInputValue('bankName'),
                     accountNumber: getInputValue('accountNumber'),
                     payrollAccount,
                     payrollAccountNumber: payrollAccount ? getInputValue('payrollAccountNumber') : undefined,
@@ -112,13 +128,33 @@ export const NewApplication = () => {
                             <select
                                 name="kreditProduct"
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                value={selectedProduct}
+                                onChange={(e) => setSelectedProduct(e.target.value)}
                             >
                                 <option value="">Select Product</option>
                                 {options.productOptions.map(opt => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
                             </select>
+                            {selectedProduct === 'Other' && (
+                                <input
+                                    type="text"
+                                    className="w-full mt-2 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                    placeholder="Specify other product"
+                                    value={otherProduct}
+                                    onChange={(e) => setOtherProduct(e.target.value)}
+                                />
+                            )}
+                            {/* Conditional Input for Other Product */}
+                            {/* We need to check the select value, but since it's uncontrolled, we might need to change it to controlled or check ref. 
+                                For simplicity, let's make it controlled or use a small state for visibility if we want to keep it uncontrolled-ish.
+                                Actually, let's just make the select controlled for cleaner "Others" handling or use a state that updates on change.
+                             */}
+                            {/* Re-implementing as controlled for cleaner "Others" logic would be best, but let's stick to the pattern. 
+                                 I'll add a state to track the selected value for these dropdowns to toggle the input.
+                             */}
                         </div>
+                        {/* Wait, I need to track the selected value to show the input. Let's add state for selected values. */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Sales ID</label>
                             <input
@@ -157,11 +193,45 @@ export const NewApplication = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Debtor Occupation</label>
-                            <input
+                            {/* Changed to select for consistency with requirement, assuming occupationOptions is now used */}
+                            <select
                                 name="debtorOccupation"
-                                type="text"
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                                placeholder="e.g. Business Owner, Manager, etc."
+                                value={selectedOccupation}
+                                onChange={(e) => setSelectedOccupation(e.target.value)}
+                            >
+                                <option value="">Select Occupation</option>
+                                {options.occupationOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                            {selectedOccupation === 'Lainnya' && (
+                                <input
+                                    type="text"
+                                    className="w-full mt-2 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                    placeholder="Specify other occupation"
+                                    value={otherOccupation}
+                                    onChange={(e) => setOtherOccupation(e.target.value)}
+                                />
+                            )}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Monthly Income</label>
+                            <MoneyInput
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                value={income}
+                                onChange={setIncome}
+                                placeholder="Rp 0"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Years of Service</label>
+                            <input
+                                name="yearsOfService"
+                                type="number"
+                                min="0"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                placeholder="e.g. 5"
                             />
                         </div>
                     </div>
@@ -194,12 +264,23 @@ export const NewApplication = () => {
                             <select
                                 name="emergencyRelationship"
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                value={selectedRelationship}
+                                onChange={(e) => setSelectedRelationship(e.target.value)}
                             >
                                 <option value="">Select Relationship</option>
                                 {options.relationshipOptions.map(opt => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
                             </select>
+                            {selectedRelationship === 'Others' && (
+                                <input
+                                    type="text"
+                                    className="w-full mt-2 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                    placeholder="Specify other relationship"
+                                    value={otherRelationship}
+                                    onChange={(e) => setOtherRelationship(e.target.value)}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>
@@ -268,12 +349,23 @@ export const NewApplication = () => {
                             <select
                                 name="bankName"
                                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                value={selectedBank}
+                                onChange={(e) => setSelectedBank(e.target.value)}
                             >
                                 <option value="">Select Bank</option>
                                 {options.bankOptions.map(opt => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
                             </select>
+                            {selectedBank === 'Lainnya' && (
+                                <input
+                                    type="text"
+                                    className="w-full mt-2 px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                    placeholder="Specify other bank"
+                                    value={otherBank}
+                                    onChange={(e) => setOtherBank(e.target.value)}
+                                />
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>

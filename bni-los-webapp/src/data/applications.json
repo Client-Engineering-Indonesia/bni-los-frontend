@@ -26,10 +26,12 @@
             }
         },
         "emergencyContact": {
-            "name": "Siti",
-            "phone": "08123456789",
-            "relationship": "Istri"
-        }
+            "name": "Jane Doe",
+            "phone": "081234567891",
+            "relationship": "Spouse"
+        },
+        "income": 15000000,
+        "yearsOfService": 5
     },
     {
         "id": "APP-002",

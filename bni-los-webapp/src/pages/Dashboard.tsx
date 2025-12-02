@@ -251,12 +251,20 @@ export const Dashboard = () => {
                         </button>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className="bg-slate-50">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 border-b border-slate-100">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">PKS Number</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Company Name</th>
-                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Created Date</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">PKS Number</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">Company Name</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">Ownership</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">Group</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">Type</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">Scheme</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">Status</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">Address</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">PKS Type</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">PKS Status</th>
+                                    <th className="px-6 py-4 text-sm font-semibold text-slate-900">Expiry Date</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -264,9 +272,20 @@ export const Dashboard = () => {
                                     <tr key={company.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 text-sm font-medium text-slate-900">{company.pksNumber}</td>
                                         <td className="px-6 py-4 text-sm text-slate-600">{company.companyName}</td>
-                                        <td className="px-6 py-4 text-sm text-slate-600">
-                                            {new Date(company.createdAt).toLocaleDateString()}
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.companyOwnership || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.groupInstitution || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.companyType || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.collaborationScheme || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.companyStatus || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.companyAddress || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.pksCooperationType || '-'}</td>
+                                        <td className="px-6 py-4 text-sm">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${company.pksStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
+                                                }`}>
+                                                {company.pksStatus || 'Active'}
+                                            </span>
                                         </td>
+                                        <td className="px-6 py-4 text-sm text-slate-600">{company.pksExpiryDate || '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>

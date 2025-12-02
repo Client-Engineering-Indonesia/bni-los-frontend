@@ -23,6 +23,11 @@ export const ApplicationDetail = () => {
     });
 
     const [showEddModal, setShowEddModal] = useState(false);
+    const [showRecalculateModal, setShowRecalculateModal] = useState(false);
+    const [recalculateForm, setRecalculateForm] = useState({
+        loanAmount: 0,
+        tenor: 0
+    });
     const [eddNotes, setEddNotes] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({
@@ -35,6 +40,8 @@ export const ApplicationDetail = () => {
         pksNumber: '',
         kreditProduct: '',
         debtorOccupation: '',
+        income: 0,
+        yearsOfService: 0,
         npwpFile: undefined as string | undefined,
         emergencyContact: {
             name: '',
@@ -61,6 +68,14 @@ export const ApplicationDetail = () => {
         return <div>Application not found</div>;
     }
 
+    // Initialize recalculate form
+    if (showRecalculateModal && recalculateForm.loanAmount === 0) {
+        setRecalculateForm({
+            loanAmount: application.loanAmount,
+            tenor: application.tenor
+        });
+    }
+
     // Initialize edit form when application loads or edit mode starts
     const startEditing = () => {
         setEditForm({
@@ -72,6 +87,8 @@ export const ApplicationDetail = () => {
             pksNumber: application.pksNumber || '',
             kreditProduct: application.kreditProduct || '',
             debtorOccupation: application.debtorOccupation || '',
+            income: application.income || 0,
+            yearsOfService: application.yearsOfService || 0,
             npwpFile: application.npwpFile,
             emergencyContact: application.emergencyContact || { name: '', phone: '', relationship: '' },
             bankingInfo: {
@@ -105,6 +122,19 @@ export const ApplicationDetail = () => {
         setShowEddModal(false);
     };
 
+    const handleRecalculateSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setTimeout(() => {
+            updateApplicationStatus(application.id, application.status, {
+                loanAmount: recalculateForm.loanAmount,
+                tenor: recalculateForm.tenor
+            });
+            setLoading(false);
+            setShowRecalculateModal(false);
+        }, 1000);
+    };
+
     const handleResubmit = (e: React.FormEvent) => {
         e.preventDefault();
         handleAction('Submitted', {
@@ -117,6 +147,8 @@ export const ApplicationDetail = () => {
             pksCompanyName: pksCompanies.find(p => p.pksNumber === editForm.pksNumber)?.companyName,
             kreditProduct: editForm.kreditProduct,
             debtorOccupation: editForm.debtorOccupation,
+            income: editForm.income,
+            yearsOfService: editForm.yearsOfService,
             npwpFile: editForm.npwpFile,
             emergencyContact: editForm.emergencyContact,
             bankingInfo: editForm.bankingInfo,
@@ -289,6 +321,13 @@ export const ApplicationDetail = () => {
                     return (
                         <div className="flex gap-3">
                             <button
+                                onClick={() => setShowRecalculateModal(true)}
+                                disabled={loading}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                <FileText size={18} /> Recalculate
+                            </button>
+                            <button
                                 onClick={() => handleAction('Approval')}
                                 disabled={loading}
                                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
@@ -314,12 +353,36 @@ export const ApplicationDetail = () => {
                     return (
                         <div className="flex gap-3">
                             <button
+                                onClick={() => {
+                                    // Dummy PDF download
+                                    const link = document.createElement('a');
+                                    link.href = 'data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNDQgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQxCiUlRU9GCg==';
+                                    link.download = 'SKK_Document.pdf';
+                                    link.click();
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                            >
+                                <FileText size={18} /> View SKK
+                            </button>
+                            <button
+                                onClick={() => {
+                                    // Dummy PDF download
+                                    const link = document.createElement('a');
+                                    link.href = 'data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNDQgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQxCiUlRU9GCg==';
+                                    link.download = 'PK_Document.pdf';
+                                    link.click();
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                            >
+                                <FileText size={18} /> View PK
+                            </button>
+                            <button
                                 onClick={() => handleAction('Disbursement Ready')}
                                 disabled={loading || !allChecked}
                                 title={!allChecked ? "Please complete the checklist first" : ""}
                                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <CheckCircle size={18} /> Final Approval
+                                <CheckCircle size={18} /> Disburse
                             </button>
                             <button
                                 onClick={() => handleAction('Rejected')}
@@ -496,6 +559,36 @@ export const ApplicationDetail = () => {
                                     />
                                 ) : (
                                     <p className="font-medium text-slate-900">{application.debtorOccupation || '-'}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Monthly Income</label>
+                                {isEditing ? (
+                                    <MoneyInput
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.income || 0}
+                                        onChange={val => setEditForm({ ...editForm, income: val })}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">
+                                        {application.income ? `Rp ${application.income.toLocaleString('id-ID')}` : '-'}
+                                    </p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm text-slate-500">Years of Service</label>
+                                {isEditing ? (
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                                        value={editForm.yearsOfService || 0}
+                                        onChange={e => setEditForm({ ...editForm, yearsOfService: Number(e.target.value) })}
+                                    />
+                                ) : (
+                                    <p className="font-medium text-slate-900">
+                                        {application.yearsOfService ? `${application.yearsOfService} Years` : '-'}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -1056,6 +1149,55 @@ export const ApplicationDetail = () => {
                                         className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
                                     >
                                         Submit Request
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Recalculate Modal */}
+            {
+                showRecalculateModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                            <h2 className="text-xl font-bold text-slate-900 mb-4">Recalculate Loan</h2>
+                            <form onSubmit={handleRecalculateSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">New Loan Amount</label>
+                                    <MoneyInput
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                        value={recalculateForm.loanAmount}
+                                        onChange={val => setRecalculateForm({ ...recalculateForm, loanAmount: val })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">New Tenor</label>
+                                    <select
+                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                                        value={recalculateForm.tenor}
+                                        onChange={e => setRecalculateForm({ ...recalculateForm, tenor: Number(e.target.value) })}
+                                    >
+                                        {options.tenorOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowRecalculateModal(false)}
+                                        className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="px-4 py-2 bg-bni-teal text-white rounded-lg font-medium hover:bg-teal-700"
+                                    >
+                                        {loading ? 'Updating...' : 'Update Loan'}
                                     </button>
                                 </div>
                             </form>

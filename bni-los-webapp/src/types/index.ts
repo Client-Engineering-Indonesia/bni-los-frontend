@@ -28,6 +28,15 @@ export interface PKSCompany {
     id: string;
     pksNumber: string;
     companyName: string;
+    companyOwnership?: string;
+    groupInstitution?: string;
+    companyType?: string;
+    collaborationScheme?: string;
+    companyStatus?: string;
+    companyAddress?: string;
+    pksCooperationType?: string;
+    pksStatus?: string;
+    pksExpiryDate?: string;
     createdAt: string;
 }
 
@@ -83,6 +92,8 @@ export interface Application {
             accountNumber: string;
         };
     };
+    income?: number;
+    yearsOfService?: number;
 }
 
 export interface User {
