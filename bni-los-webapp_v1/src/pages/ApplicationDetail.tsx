@@ -134,8 +134,8 @@ export const ApplicationDetail = () => {
                 setShowSuccessModal(true);
                 setLoading(false);
             }
-            // Special handling for Internal Checking (Submit Process) or External Checking
-            else if (newStatus === 'Internal Checking' || newStatus === 'External Checking') {
+            // Special handling for Internal Checking (Submit Process), External Checking, or Supervisor Review
+            else if (newStatus === 'Internal Checking' || newStatus === 'External Checking' || newStatus === 'Supervisor Review') {
                 if (!application.piid) {
                     throw new Error('PIID not found for this application');
                 }
