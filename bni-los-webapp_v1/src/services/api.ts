@@ -176,3 +176,101 @@ export async function terminateLoanApplication(piid: string): Promise<void> {
         throw new Error('An unexpected error occurred while deleting the application.');
     }
 }
+
+/**
+ * Reject a loan application
+ * @param piid - Process Instance ID from the worklist
+ * @returns Promise with API response
+ */
+export async function rejectLoanApplication(
+    piid: string
+): Promise<{ responseCode: string; responseMessage: string; result: string }> {
+    const url = `${API_BASE_URL}/loan/reject`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${AUTH_CREDENTIALS}`,
+            },
+            body: JSON.stringify({ piid }),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check credentials.');
+            }
+            if (response.status === 400) {
+                throw new Error('Invalid request. Please check the PIID.');
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Check response code - API returns top-level responseCode
+        if (data.responseCode !== '00' &&
+            data.responseCode !== '200' &&
+            data.responseCode?.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data.responseMessage || 'Failed to reject loan application');
+        }
+
+        return data;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred while rejecting the application.');
+    }
+}
+
+/**
+ * Submit loan application process (e.g. Start Internal Check)
+ * @param piid - Process Instance ID
+ * @returns Promise with API response
+ */
+export async function submitLoanProcess(
+    piid: string
+): Promise<{ responseCode: string; responseMessage: string; result: string }> {
+    const url = `${API_BASE_URL}/loan/submit`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${AUTH_CREDENTIALS}`,
+            },
+            body: JSON.stringify({ piid }),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check credentials.');
+            }
+            if (response.status === 400) {
+                throw new Error('Invalid request. Please check the PIID.');
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Check response code
+        if (data.responseCode !== '00' &&
+            data.responseCode !== '200' &&
+            data.responseCode?.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data.responseMessage || 'Failed to submit process');
+        }
+
+        return data;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred while submitting the process.');
+    }
+}

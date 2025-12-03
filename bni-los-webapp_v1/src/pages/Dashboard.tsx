@@ -38,7 +38,7 @@ const formatMoney = (amount: number): string => {
 export const Dashboard = () => {
     const { user } = useAuth();
     const {
-        deleteApplication,
+
         pksCompanies,
         addPKSCompany,
         setApplications,

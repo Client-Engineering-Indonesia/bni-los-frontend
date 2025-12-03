@@ -28,6 +28,7 @@ export function mapWorklistToApplication(item: WorklistItem): Application {
         createdAt: item.date,
         updatedAt: item.date,
         salesId,
+        piid: item.piid, // Add PIID for reject API
         loanId: loanApplication.loanInformation?.loanId || loanApplication.loanId,
         pksNumber: loanApplication.loanInformation?.pksNumberCompany || '',
         kreditProduct: loanApplication.loanInformation?.creditProduct || '',
