@@ -476,9 +476,45 @@ export const Dashboard = () => {
                                 Cancel
                             </button>
                             <button
-                                onClick={() => {
-                                    deleteApplication(deleteConfirm);
-                                    setDeleteConfirm(null);
+                                onClick={async () => {
+                                    if (!deleteConfirm) return;
+
+                                    try {
+                                        setContextLoading(true);
+                                        // 1. Fetch latest worklist to get the PIID
+                                        // We need to find the item that matches the ID we want to delete
+                                        const worklistData = await import('../services/api').then(m =>
+                                            m.fetchWorklist('Sales', user?.salesId || '35246', 1, 100)
+                                        );
+
+                                        // Find the item with matching loanId or applicationId
+                                        // Note: loanId is nested inside loanApplication.loanInformation
+                                        const targetItem = worklistData.worklists.find(item =>
+                                            item.loanApplication?.loanInformation?.loanId === deleteConfirm ||
+                                            item.applicationId === deleteConfirm ||
+                                            item.piid === deleteConfirm
+                                        );
+
+                                        if (!targetItem || !targetItem.piid) {
+                                            throw new Error('Could not find process ID (PIID) for this application');
+                                        }
+
+                                        // 2. Call terminate API with the PIID
+                                        await import('../services/api').then(m =>
+                                            m.terminateLoanApplication(targetItem.piid)
+                                        );
+
+                                        // 3. Success - refresh the list
+                                        setDeleteConfirm(null);
+                                        refetch();
+
+                                    } catch (err) {
+                                        const msg = err instanceof Error ? err.message : 'Failed to delete application';
+                                        setContextError(msg);
+                                        setDeleteConfirm(null);
+                                    } finally {
+                                        setContextLoading(false);
+                                    }
                                 }}
                                 className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
                             >
