@@ -36,7 +36,7 @@ export function useWorklist(
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(initialPage);
-    const [pageSize, setPageSize] = useState(initialSize);
+    const [pageSize] = useState(initialSize);
 
     const loadWorklist = useCallback(async () => {
         setIsLoading(true);

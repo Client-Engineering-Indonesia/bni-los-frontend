@@ -36,7 +36,7 @@ export const MOCK_APPLICATIONS: Application[] = [
         customerName: 'Ahmad Rizki',
         loanAmount: 75000000,
         tenor: 12,
-        status: 'Verification',
+        status: 'Internal Checking',
         createdAt: '2023-10-20T11:20:00Z',
         updatedAt: '2023-10-24T16:45:00Z',
         assignedTo: 'Analyst',

@@ -137,6 +137,47 @@ export async function submitLoanApplication(
 }
 
 /**
+ * Terminate/Delete a loan application
+ * @param piid - The Process Instance ID of the application to delete
+ * @returns Promise with API response
+ */
+export async function terminateLoanApplication(piid: string): Promise<void> {
+    const url = `${API_BASE_URL}/loan/terminate`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${AUTH_CREDENTIALS}`,
+            },
+            body: JSON.stringify({ piid }),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check credentials.');
+            }
+            if (response.status === 404) {
+                throw new Error('Application not found.');
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        // The API might return a JSON response even for void, but we just check for success
+        // If needed we can parse it, but for now void is sufficient as per requirements
+        // "After deletion, refresh the worklist" implies we just need to know it succeeded.
+
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred while deleting the application.');
+    }
+}
+
+/**
  * Reject a loan application
  * @param piid - Process Instance ID from the worklist
  * @returns Promise with API response
@@ -233,4 +274,3 @@ export async function submitLoanProcess(
         throw new Error('An unexpected error occurred while submitting the process.');
     }
 }
-
