@@ -134,8 +134,8 @@ export const ApplicationDetail = () => {
                 setShowSuccessModal(true);
                 setLoading(false);
             }
-            // Special handling for Internal Checking (Submit Process), External Checking, or Supervisor Review
-            else if (newStatus === 'Internal Checking' || newStatus === 'External Checking' || newStatus === 'Supervisor Review') {
+            // Special handling for Internal Checking (Submit Process), External Checking, Supervisor Review, or Analyst Review (Approve)
+            else if (newStatus === 'Internal Checking' || newStatus === 'External Checking' || newStatus === 'Supervisor Review' || newStatus === 'Analyst Review') {
                 if (!application.piid) {
                     throw new Error('PIID not found for this application');
                 }
@@ -240,6 +240,7 @@ export const ApplicationDetail = () => {
     };
 
     const renderActions = () => {
+        console.log('Debug renderActions:', { role: user.role, status: application.status });
         switch (user.role) {
             case 'Sales':
                 if (application.status === 'Submitted') {
@@ -339,7 +340,8 @@ export const ApplicationDetail = () => {
                 }
                 break;
             case 'Supervisor':
-                if (application.status === 'Supervisor Review') {
+                // Check if status contains 'Supervisor' to be more robust
+                if (application.status === 'Supervisor Review' || application.status.includes('Supervisor')) {
                     return (
                         <div className="flex gap-3">
                             <button
