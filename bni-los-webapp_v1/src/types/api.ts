@@ -14,9 +14,9 @@ export interface WorklistAPIResponse {
 }
 
 export interface WorklistItem {
-    applicationId: string;
-    salesId: string;
-    customerName: string;
+    applicationId?: string;
+    salesId?: string;
+    customerName?: string;
     status: string;
     date: string;
     piid: string;
@@ -26,27 +26,33 @@ export interface WorklistItem {
 export interface LoanApplicationDetails {
     loanInformation: {
         loanId: string;
-        pksNumberCompany: string;
-        creditProduct: string;
+        pksNumberCompany?: string;
+        creditProduct?: string;
+        salesId?: string;
     };
-    customerInformation: {
-        fullName: string;
-        nik: string;
-        debtorOccupation: string;
+    customerInformation?: {
+        fullName?: string;
+        nik?: string;
+        debtorOccupation?: string;
+        lengthOfEmployment?: string;
+        salary?: number;
     };
-    loanDetails: {
-        loanAmount: number;
-        tenor: number;
+    loanDetails?: {
+        loanAmount?: number;
+        tenor?: number;
     };
-    bankingInformation: {
-        bankName: string;
-        accountNumber: string;
+    bankingInformation?: {
+        bankName?: string;
+        accountNumber?: string;
+        hasPayrollAccount?: boolean;
+        existingLoans?: string;
     };
-    preferredDisbursementAccount: {
-        recipientName: string;
-        bankName: string;
-        accountNumber: string;
+    preferredDisbursementAccount?: {
+        recipientName?: string;
+        bankName?: string;
+        accountNumber?: string;
     };
+    loanId: string;
     status: string;
     eddNotes?: string;
 }
