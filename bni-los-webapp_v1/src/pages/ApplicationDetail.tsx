@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, FileText } from 'lucide-react';
 import type { ApplicationStatus } from '../types';
 import { MoneyInput } from '../components/MoneyInput';
+import { rejectLoanApplication, submitLoanProcess } from '../services/api';
+import { SuccessModal } from '../components/SuccessModal';
 
 export const ApplicationDetail = () => {
     const { id } = useParams();
@@ -23,6 +25,9 @@ export const ApplicationDetail = () => {
     });
 
     const [showEddModal, setShowEddModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [successTitle, setSuccessTitle] = useState('');
     const [showRecalculateModal, setShowRecalculateModal] = useState(false);
     const [recalculateForm, setRecalculateForm] = useState({
         loanAmount: 0,
@@ -107,13 +112,59 @@ export const ApplicationDetail = () => {
         setIsEditing(true);
     };
 
-    const handleAction = (newStatus: ApplicationStatus, data?: any) => {
+    const handleAction = async (newStatus: ApplicationStatus, data?: any) => {
         setLoading(true);
-        setTimeout(() => {
-            updateApplicationStatus(application.id, newStatus, data);
+
+        try {
+            // Special handling for rejection - call API
+            if (newStatus === 'Rejected') {
+                if (!application.piid) {
+                    throw new Error('PIID not found for this application');
+                }
+
+                // Call reject API
+                const response = await rejectLoanApplication(application.piid);
+
+                // Update local state after successful API call
+                updateApplicationStatus(application.id, newStatus, data);
+
+                // Show success modal
+                setSuccessTitle('Application Rejected');
+                setSuccessMessage(response.result || 'Application has been rejected successfully.');
+                setShowSuccessModal(true);
+                setLoading(false);
+            }
+            // Special handling for Internal Checking (Submit Process) or External Checking
+            else if (newStatus === 'Internal Checking' || newStatus === 'External Checking') {
+                if (!application.piid) {
+                    throw new Error('PIID not found for this application');
+                }
+
+                // Call submit API
+                const response = await submitLoanProcess(application.piid);
+
+                // Update local state after successful API call
+                updateApplicationStatus(application.id, newStatus, data);
+
+                // Show success modal
+                setSuccessTitle('Process Submitted');
+                setSuccessMessage(response.result || 'Process has been submitted successfully.');
+                setShowSuccessModal(true);
+                setLoading(false);
+            }
+            else {
+                // For other statuses, just update local state (mock)
+                setTimeout(() => {
+                    updateApplicationStatus(application.id, newStatus, data);
+                    setLoading(false);
+                    navigate('/');
+                }, 1000);
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+            alert(`Failed to process action: ${errorMessage}`);
             setLoading(false);
-            navigate('/');
-        }, 1000);
+        }
     };
 
     const handleEddSubmit = (e: React.FormEvent) => {
@@ -416,6 +467,15 @@ export const ApplicationDetail = () => {
 
     return (
         <div className="max-w-4xl mx-auto mb-20">
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => {
+                    setShowSuccessModal(false);
+                    navigate('/');
+                }}
+                title={successTitle}
+                message={successMessage}
+            />
             <button
                 onClick={() => navigate('/')}
                 className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-6 transition-colors"
