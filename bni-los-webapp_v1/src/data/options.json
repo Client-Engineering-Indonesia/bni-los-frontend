@@ -1,0 +1,144 @@
+{
+    "tenorOptions": [
+        {
+            "value": 6,
+            "label": "6 Months"
+        },
+        {
+            "value": 12,
+            "label": "12 Months"
+        },
+        {
+            "value": 18,
+            "label": "18 Months"
+        },
+        {
+            "value": 24,
+            "label": "24 Months"
+        },
+        {
+            "value": 36,
+            "label": "36 Months"
+        },
+        {
+            "value": 48,
+            "label": "48 Months"
+        },
+        {
+            "value": 60,
+            "label": "60 Months"
+        }
+    ],
+    "productOptions": [
+        {
+            "value": "BNI Fleksi",
+            "label": "BNI Fleksi"
+        },
+        {
+            "value": "BNI Fleksi Aktif",
+            "label": "BNI Fleksi Aktif"
+        },
+        {
+            "value": "Other",
+            "label": "Other"
+        }
+    ],
+    "occupationOptions": [
+        {
+            "value": "PNS",
+            "label": "PNS"
+        },
+        {
+            "value": "Pegawai Swasta",
+            "label": "Pegawai Swasta"
+        },
+        {
+            "value": "Wiraswasta",
+            "label": "Wiraswasta"
+        },
+        {
+            "value": "TNI/Polri",
+            "label": "TNI/Polri"
+        },
+        {
+            "value": "Professional",
+            "label": "Professional"
+        },
+        {
+            "value": "Lainnya",
+            "label": "Lainnya"
+        }
+    ],
+    "relationshipOptions": [
+        {
+            "value": "Husband",
+            "label": "Husband"
+        },
+        {
+            "value": "Wife",
+            "label": "Wife"
+        },
+        {
+            "value": "Father",
+            "label": "Father"
+        },
+        {
+            "value": "Mother",
+            "label": "Mother"
+        },
+        {
+            "value": "Older Sibling",
+            "label": "Older Sibling"
+        },
+        {
+            "value": "Younger Sibling",
+            "label": "Younger Sibling"
+        },
+        {
+            "value": "Child",
+            "label": "Child"
+        },
+        {
+            "value": "Others",
+            "label": "Others"
+        }
+    ],
+    "bankOptions": [
+        {
+            "value": "BNI",
+            "label": "BNI"
+        },
+        {
+            "value": "Mandiri",
+            "label": "Mandiri"
+        },
+        {
+            "value": "BCA",
+            "label": "BCA"
+        },
+        {
+            "value": "BRI",
+            "label": "BRI"
+        },
+        {
+            "value": "BTN",
+            "label": "BTN"
+        },
+        {
+            "value": "CIMB Niaga",
+            "label": "CIMB Niaga"
+        },
+        {
+            "value": "Danamon",
+            "label": "Danamon"
+        },
+        {
+            "value": "Permata",
+            "label": "Permata"
+        },
+        {
+            "value": "Lainnya",
+            "label": "Lainnya"
+        }
+    ]
+}
