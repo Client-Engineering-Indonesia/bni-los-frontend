@@ -1,0 +1,1575 @@
+{
+    "status": {
+        "responseCode": "00",
+        "responseMessage": "SUCCESS",
+        "pagination": {
+            "page": 1,
+            "size": 10,
+            "total": 22,
+            "totalPages": 3
+        }
+    },
+    "worklists": [
+        {
+            "applicationId": "FLKBFA2025120224",
+            "salesId": "35246",
+            "customerName": "Siti Nurhaliza",
+            "status": "EDD Required",
+            "date": "2025-12-03T05:41:38Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250102-045",
+                    "pksNumberCompany": "PKS-445566",
+                    "creditProduct": "KPR Bersubsidi",
+                    "salesId": "jessica",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498477",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Siti Nurhaliza",
+                    "nik": "3201234567890123",
+                    "debtorOccupation": "Medical Doctor",
+                    "lengthOfEmployment": "8 years",
+                    "salary": 2.5E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498476",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Ahmad Nurhaliza",
+                    "phoneNumber": "081298765432",
+                    "relationship": "Husband",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498473",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250102-045",
+                    "npwpDocumentId": "DOC-NPWP-20250102-045",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498472",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 3.5E8,
+                    "tenor": 120,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498474",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank Mandiri",
+                    "accountNumber": "1234509876",
+                    "hasPayrollAccount": false,
+                    "existingLoans": "None",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498470",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Siti Nurhaliza",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "9988776655",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498471",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "REJECT",
+                    "amlResult": "PASS",
+                    "centralDedupResult": "PASS",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498475",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "externalCheckingResult": {
+                    "npwpChecking": "PASS",
+                    "dukcapilChecking": "PASS",
+                    "slikChecking": "PASS",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-12472-1764740517954",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "ExternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "FLKBFA2025120224",
+                "status": "EDD Required",
+                "eddNotes": "Add Document",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-428-1764740498469",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "931"
+        },
+        {
+            "applicationId": "FLKBFA2025120223",
+            "salesId": "35246",
+            "customerName": "Siti Nurhaliza",
+            "status": "EDD Required",
+            "date": "2025-12-03T05:38:56Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250102-045",
+                    "pksNumberCompany": "PKS-445566",
+                    "creditProduct": "KPR Bersubsidi",
+                    "salesId": "jessica",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336533",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Siti Nurhaliza",
+                    "nik": "3201234567890123",
+                    "debtorOccupation": "Medical Doctor",
+                    "lengthOfEmployment": "8 years",
+                    "salary": 2.5E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336532",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Ahmad Nurhaliza",
+                    "phoneNumber": "081298765432",
+                    "relationship": "Husband",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336529",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250102-045",
+                    "npwpDocumentId": "DOC-NPWP-20250102-045",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336528",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 3.5E8,
+                    "tenor": 120,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336530",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank Mandiri",
+                    "accountNumber": "1234509876",
+                    "hasPayrollAccount": false,
+                    "existingLoans": "None",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336526",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Siti Nurhaliza",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "9988776655",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336527",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "REJECT",
+                    "amlResult": "PASS",
+                    "centralDedupResult": "PASS",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336531",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "externalCheckingResult": {
+                    "npwpChecking": "PASS",
+                    "dukcapilChecking": "PASS",
+                    "slikChecking": "PASS",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-12472-1764740367719",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "ExternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "FLKBFA2025120223",
+                "status": "EDD Required",
+                "eddNotes": "Add Document",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764740336525",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "930"
+        },
+        {
+            "applicationId": "FLKBFA2025120221",
+            "salesId": "35246",
+            "customerName": "Siti Nurhaliza",
+            "status": "EDD Required",
+            "date": "2025-12-03T04:36:06Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250102-045",
+                    "pksNumberCompany": "PKS-445566",
+                    "creditProduct": "KPR Bersubsidi",
+                    "salesId": "jessica",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566375",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Siti Nurhaliza",
+                    "nik": "3201234567890123",
+                    "debtorOccupation": "Medical Doctor",
+                    "lengthOfEmployment": "8 years",
+                    "salary": 2.5E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566374",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Ahmad Nurhaliza",
+                    "phoneNumber": "081298765432",
+                    "relationship": "Husband",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566371",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250102-045",
+                    "npwpDocumentId": "DOC-NPWP-20250102-045",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566370",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 3.5E8,
+                    "tenor": 120,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566372",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank Mandiri",
+                    "accountNumber": "1234509876",
+                    "hasPayrollAccount": false,
+                    "existingLoans": "None",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566368",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Siti Nurhaliza",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "9988776655",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566369",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "REJECT",
+                    "amlResult": "PASS",
+                    "centralDedupResult": "PASS",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566373",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "externalCheckingResult": {
+                    "npwpChecking": "PASS",
+                    "dukcapilChecking": "PASS",
+                    "slikChecking": "PASS",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-12472-1764736845438",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "ExternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "FLKBFA2025120221",
+                "status": "EDD Required",
+                "eddNotes": "Need to revise the doc please",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-423-1764736566367",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "928"
+        },
+        {
+            "applicationId": "FLKBFA2025120220",
+            "salesId": "35246",
+            "customerName": "Siti Nurhaliza",
+            "status": "EDD Required",
+            "date": "2025-12-03T03:52:34Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250102-045",
+                    "pksNumberCompany": "PKS-445566",
+                    "creditProduct": "KPR Bersubsidi",
+                    "salesId": "jessica",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947998",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Siti Nurhaliza",
+                    "nik": "3201234567890123",
+                    "debtorOccupation": "Medical Doctor",
+                    "lengthOfEmployment": "8 years",
+                    "salary": 2.5E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947997",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Ahmad Nurhaliza",
+                    "phoneNumber": "081298765432",
+                    "relationship": "Husband",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947994",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250102-045",
+                    "npwpDocumentId": "DOC-NPWP-20250102-045",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947993",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 3.5E8,
+                    "tenor": 120,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947995",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank Mandiri",
+                    "accountNumber": "1234509876",
+                    "hasPayrollAccount": false,
+                    "existingLoans": "None",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947991",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Siti Nurhaliza",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "9988776655",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947992",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "REJECT",
+                    "amlResult": "PASS",
+                    "centralDedupResult": "PASS",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947996",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "externalCheckingResult": {
+                    "npwpChecking": "PASS",
+                    "dukcapilChecking": "PASS",
+                    "slikChecking": "PASS",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-12472-1764735612167",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.b8300319-3dfd-4ae0-8f28-9bfcd57e336aT",
+                        "className": "ExternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "FLKBFA2025120220",
+                "status": "EDD Required",
+                "eddNotes": "Need to revise the doc please",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-442-1764733947990",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.3ea5129d-5728-495d-b090-5a0f04ea85e6T",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "927"
+        },
+        {
+            "applicationId": "LN-20250101-001",
+            "salesId": "35246",
+            "customerName": "Budi Santoso",
+            "status": "Submitted",
+            "date": "2025-12-03T03:44:26Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250101-001",
+                    "pksNumberCompany": "PKS-998877",
+                    "creditProduct": "KTA Reguler",
+                    "salesId": "SLS12345",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460789",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Budi Santoso",
+                    "nik": "3175091201990003",
+                    "debtorOccupation": "Software Engineer",
+                    "lengthOfEmployment": "3 years",
+                    "salary": 1.25000005E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460788",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Andi Saputra",
+                    "phoneNumber": "081234567890",
+                    "relationship": "Brother",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460785",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250101-001",
+                    "npwpDocumentId": "DOC-NPWP-20250101-001",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460784",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 5.0E7,
+                    "tenor": 24,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460786",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank BNI",
+                    "accountNumber": "1234567890",
+                    "hasPayrollAccount": true,
+                    "existingLoans": "Kredit Motor",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460782",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Budi Santoso",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "1234567890",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460783",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "REJECT",
+                    "amlResult": "PASS",
+                    "centralDedupResult": "PASS",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460787",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "externalCheckingResult": {
+                    "npwpChecking": "PASS",
+                    "dukcapilChecking": "PASS",
+                    "slikChecking": "PASS",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-12472-1764733523238",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                        "className": "ExternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "LN-20250101-001",
+                "status": "Submitted",
+                "eddNotes": "Need to revise the doc please",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-10331-1764733460781",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.ac04cdad-6bb0-4872-9e21-a916fc1f4c6eT",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "926"
+        },
+        {
+            "applicationId": "LN-20250101-001",
+            "salesId": "35246",
+            "customerName": "Budi Santoso",
+            "status": "Submitted",
+            "date": "2025-12-03T03:38:07Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250101-001",
+                    "pksNumberCompany": "PKS-998877",
+                    "creditProduct": "KTA Reguler",
+                    "salesId": "SLS12345",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081198",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Budi Santoso",
+                    "nik": "3175091201990003",
+                    "debtorOccupation": "Software Engineer",
+                    "lengthOfEmployment": "3 years",
+                    "salary": 1.25000005E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081197",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Andi Saputra",
+                    "phoneNumber": "081234567890",
+                    "relationship": "Brother",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081194",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250101-001",
+                    "npwpDocumentId": "DOC-NPWP-20250101-001",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081193",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 5.0E7,
+                    "tenor": 24,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081195",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank BNI",
+                    "accountNumber": "1234567890",
+                    "hasPayrollAccount": true,
+                    "existingLoans": "Kredit Motor",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081191",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Budi Santoso",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "1234567890",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081192",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "REJECT",
+                    "amlResult": "PASS",
+                    "centralDedupResult": "PASS",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081196",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "externalCheckingResult": {
+                    "npwpChecking": "PASS",
+                    "dukcapilChecking": "PASS",
+                    "slikChecking": "PASS",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-12472-1764733129251",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                        "className": "ExternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "LN-20250101-001",
+                "status": "Submitted",
+                "eddNotes": "Need to revise the doc please",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-3390-1764733081190",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.aa85279b-3a34-4979-8fc3-ee7e537ef676T",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "925"
+        },
+        {
+            "applicationId": "FLKBFA2025120219",
+            "salesId": "35246",
+            "customerName": "Siti Nurhaliza",
+            "status": "Submitted",
+            "date": "2025-12-03T03:16:11Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250102-045",
+                    "pksNumberCompany": "PKS-445566",
+                    "creditProduct": "KPR Bersubsidi",
+                    "salesId": "jessica",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771312",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Siti Nurhaliza",
+                    "nik": "3201234567890123",
+                    "debtorOccupation": "Medical Doctor",
+                    "lengthOfEmployment": "8 years",
+                    "salary": 2.5E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771311",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Ahmad Nurhaliza",
+                    "phoneNumber": "081298765432",
+                    "relationship": "Husband",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771308",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250102-045",
+                    "npwpDocumentId": "DOC-NPWP-20250102-045",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771307",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 3.5E8,
+                    "tenor": 120,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771309",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank Mandiri",
+                    "accountNumber": "1234509876",
+                    "hasPayrollAccount": false,
+                    "existingLoans": "None",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771305",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Siti Nurhaliza",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "9988776655",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771306",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "CLEAR",
+                    "amlResult": "LOW_RISK",
+                    "centralDedupResult": "NO_DUPLICATION",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771310",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "FLKBFA2025120219",
+                "status": "Submitted",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731771304",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "924"
+        },
+        {
+            "applicationId": "FLKBFA2025120218",
+            "salesId": "35246",
+            "customerName": "Siti Nurhaliza",
+            "status": "Submitted",
+            "date": "2025-12-03T03:16:01Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250102-045",
+                    "pksNumberCompany": "PKS-445566",
+                    "creditProduct": "KPR Bersubsidi",
+                    "salesId": "jessica",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761138",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Siti Nurhaliza",
+                    "nik": "3201234567890123",
+                    "debtorOccupation": "Medical Doctor",
+                    "lengthOfEmployment": "8 years",
+                    "salary": 2.5E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761137",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Ahmad Nurhaliza",
+                    "phoneNumber": "081298765432",
+                    "relationship": "Husband",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761134",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250102-045",
+                    "npwpDocumentId": "DOC-NPWP-20250102-045",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761133",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 3.5E8,
+                    "tenor": 120,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761135",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank Mandiri",
+                    "accountNumber": "1234509876",
+                    "hasPayrollAccount": false,
+                    "existingLoans": "None",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761131",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Siti Nurhaliza",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "9988776655",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761132",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "CLEAR",
+                    "amlResult": "LOW_RISK",
+                    "centralDedupResult": "NO_DUPLICATION",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761136",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "FLKBFA2025120218",
+                "status": "Submitted",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-2629-1764731761130",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "923"
+        },
+        {
+            "applicationId": "FLKBFA2025120217",
+            "salesId": "35246",
+            "customerName": "Siti Nurhaliza",
+            "status": "Submitted",
+            "date": "2025-12-03T02:47:06Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250102-045",
+                    "pksNumberCompany": "PKS-445566",
+                    "creditProduct": "KPR Bersubsidi",
+                    "salesId": "jessica",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020264",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Siti Nurhaliza",
+                    "nik": "3201234567890123",
+                    "debtorOccupation": "Medical Doctor",
+                    "lengthOfEmployment": "8 years",
+                    "salary": 2.5E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020263",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Ahmad Nurhaliza",
+                    "phoneNumber": "081298765432",
+                    "relationship": "Husband",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020260",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250102-045",
+                    "npwpDocumentId": "DOC-NPWP-20250102-045",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020259",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 3.5E8,
+                    "tenor": 120,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020261",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank Mandiri",
+                    "accountNumber": "1234509876",
+                    "hasPayrollAccount": false,
+                    "existingLoans": "None",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020257",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Siti Nurhaliza",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "9988776655",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020258",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "CLEAR",
+                    "amlResult": "LOW_RISK",
+                    "centralDedupResult": "NO_DUPLICATION",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020262",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "FLKBFA2025120217",
+                "status": "Submitted",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-468-1764730020256",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.65e04eb8-5aa9-41fe-865f-506fba8d65a2T",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "922"
+        },
+        {
+            "applicationId": "LN-20250101-001",
+            "salesId": "35246",
+            "customerName": "Budi Santoso",
+            "status": "Submitted",
+            "date": "2025-12-02T18:21:31Z",
+            "loanApplication": {
+                "loanInformation": {
+                    "loanId": "LN-20250101-001",
+                    "pksNumberCompany": "PKS-998877",
+                    "creditProduct": "KTA Reguler",
+                    "salesId": "SLS12345",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691297",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "loanInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "customerInformation": {
+                    "fullName": "Budi Santoso",
+                    "nik": "3175091201990003",
+                    "debtorOccupation": "Software Engineer",
+                    "lengthOfEmployment": "3 years",
+                    "salary": 1.25000005E7,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691296",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "customerInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "emergencyContact": {
+                    "contactName": "Andi Saputra",
+                    "phoneNumber": "081234567890",
+                    "relationship": "Brother",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691293",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "emergencyContact",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "documents": {
+                    "ktpDocumentId": "DOC-KTP-20250101-001",
+                    "npwpDocumentId": "DOC-NPWP-20250101-001",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691292",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "documents",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanDetails": {
+                    "loanAmount": 5.0E7,
+                    "tenor": 24,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691294",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "loanDetails",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "bankingInformation": {
+                    "bankName": "Bank BNI",
+                    "accountNumber": "1234567890",
+                    "hasPayrollAccount": true,
+                    "existingLoans": "Kredit Motor",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691290",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "bankingInformation",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "preferredDisbursementAccount": {
+                    "recipientName": "Budi Santoso",
+                    "bankName": "Bank BNI",
+                    "accountNumber": "1234567890",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691291",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "preferredDisbursementAccount",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "internalCheckingResult": {
+                    "dhnResult": "REJECT",
+                    "amlResult": "PASS",
+                    "centralDedupResult": "PASS",
+                    "pepFlag": false,
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691295",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "InternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "externalCheckingResult": {
+                    "npwpChecking": "PASS",
+                    "dukcapilChecking": "PASS",
+                    "slikChecking": "PASS",
+                    "@metadata": {
+                        "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-12472-1764699722700",
+                        "dirty": false,
+                        "invalid": false,
+                        "shared": false,
+                        "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                        "className": "ExternalCheckingResult",
+                        "contentObject": false,
+                        "supportsAdditionalProperties": false
+                    }
+                },
+                "loanId": "LN-20250101-001",
+                "status": "Submitted",
+                "@metadata": {
+                    "objectID": "ef00ba67-bd2b-4958-a029-24980f7c8089-519-1764699691289",
+                    "dirty": false,
+                    "invalid": false,
+                    "shared": false,
+                    "rootVersionContextID": "2064.136f9709-9294-48c4-bf14-d480d9cc614eT",
+                    "className": "loanApplication",
+                    "contentObject": false,
+                    "supportsAdditionalProperties": false
+                }
+            },
+            "piid": "921"
+        }
+    ]
+}
