@@ -1,33 +1,61 @@
 import type { WorklistAPIResponse } from '../types/api';
+import type { Role } from '../types';
+import type { LoanApplicationPayload, LoanApplicationResponse } from '../types/loanApplicationAPI';
 
 // API Configuration
 // Using proxy path /api which will be rewritten to https://nds-webmethod.ngrok.dev:443/restv2 by Vite
 const API_BASE_URL = '/api/Fleksi.leads.controllers:LoanController';
 const AUTH_CREDENTIALS = btoa('Administrator:manage'); // Base64 encode "Administrator:manage"
 
+// Map roles to their API user parameter values
+const ROLE_USER_MAPPING: Record<Role, string | null> = {
+    'Sales': null, // Sales uses salesId, not user parameter
+    'ICR': 'icr_user',
+    'Supervisor': 'sales_spv',
+    'Analyst': 'analyst_user',
+    'Approver': 'approver_user',
+    'Operation': 'operation_user',
+    'Admin': null, // Admin doesn't call worklist API
+};
+
 /**
- * Fetch worklist data from the API
- * @param salesId - Optional sales ID to filter worklist (required for Sales role)
+ * Fetch worklist data from the API based on user role
+ * @param role - User role (Sales, ICR, Supervisor, etc.)
+ * @param salesId - Sales ID (only for Sales role)
  * @param page - Page number (1-indexed)
  * @param size - Items per page
  */
 export async function fetchWorklist(
+    role: Role,
     salesId?: string,
     page: number = 1,
     size: number = 10
 ): Promise<WorklistAPIResponse> {
-    // Build query parameters
-    const params = new URLSearchParams({
-        page: page.toString(),
-        size: size.toString(),
-    });
 
-    // Add salesId only if provided (for Sales role)
-    if (salesId) {
-        params.append('salesId', salesId);
+    let url: string;
+
+    if (role === 'Sales') {
+        // Sales role uses worklist-sales endpoint with salesId parameter
+        const params = new URLSearchParams({
+            salesId: salesId || '35246', // Default for testing
+            page: page.toString(),
+            size: size.toString(),
+        });
+        url = `${API_BASE_URL}/loan/worklist-sales?${params.toString()}`;
+    } else {
+        // Other roles use worklist endpoint with user parameter
+        const userParam = ROLE_USER_MAPPING[role];
+        if (!userParam) {
+            throw new Error(`No user mapping found for role: ${role}`);
+        }
+
+        const params = new URLSearchParams({
+            user: userParam,
+            page: page.toString(),
+            size: size.toString(),
+        });
+        url = `${API_BASE_URL}/loan/worklist?${params.toString()}`;
     }
-
-    const url = `${API_BASE_URL}/loan/worklist-sales?${params.toString()}`;
 
     try {
         const response = await fetch(url, {
@@ -56,5 +84,54 @@ export async function fetchWorklist(
             throw error;
         }
         throw new Error('An unexpected error occurred while fetching worklist data.');
+    }
+}
+
+/**
+ * Submit a new loan application
+ * @param payload - The loan application payload matching API requirements
+ * @returns Promise with API response
+ */
+export async function submitLoanApplication(
+    payload: LoanApplicationPayload
+): Promise<LoanApplicationResponse> {
+    const url = `${API_BASE_URL}/loan/insert`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${AUTH_CREDENTIALS}`,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check credentials.');
+            }
+            if (response.status === 400) {
+                throw new Error('Invalid application data. Please check all fields.');
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data: LoanApplicationResponse = await response.json();
+
+        // Check response code
+        if (data.status.responseCode !== '00' &&
+            data.status.responseCode !== '200' &&
+            data.status.responseCode.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data.status.responseMessage || 'Failed to submit loan application');
+        }
+
+        return data;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred while submitting the application.');
     }
 }

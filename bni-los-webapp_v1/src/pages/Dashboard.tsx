@@ -48,10 +48,11 @@ export const Dashboard = () => {
     } = useData();
     const navigate = useNavigate();
 
-    // Determine if we should use salesId for API call
-    // Only Sales role needs to filter by salesId, others fetch all worklists
-    const apiSalesId = user?.role === 'Sales' ? (user?.salesId || '35246') : undefined;
+    if (!user) return null;
 
+    // Call API with role-specific parameters
+    // Sales: uses salesId parameter on /worklist-sales endpoint
+    // Others: use user parameter on /worklist endpoint
     const {
         applications: apiApplications,
         pagination,
@@ -59,7 +60,7 @@ export const Dashboard = () => {
         error,
         refetch,
         setPage
-    } = useWorklist(apiSalesId, 1, 10);
+    } = useWorklist(user.role, user?.salesId, 1, 10);
 
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');

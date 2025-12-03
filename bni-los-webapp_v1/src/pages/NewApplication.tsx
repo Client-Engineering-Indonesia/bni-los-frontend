@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { MoneyInput } from '../components/MoneyInput';
-import type { Application } from '../types';
+import { submitLoanApplication } from '../services/api';
+import { convertFileToBase64 } from '../utils/fileUtils';
+import type { LoanApplicationPayload } from '../types/loanApplicationAPI';
 
 export const NewApplication = () => {
     const navigate = useNavigate();
-    const { addApplication, pksCompanies, options } = useData();
+    const { pksCompanies, options } = useData();
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [amount, setAmount] = useState(0);
     const [income, setIncome] = useState(0);
     const [selectedPKS, setSelectedPKS] = useState('');
@@ -26,72 +29,122 @@ export const NewApplication = () => {
     const [selectedBank, setSelectedBank] = useState('');
     const [otherBank, setOtherBank] = useState('');
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
+        setError(null);
 
         const form = e.currentTarget;
 
-        // Get all form inputs
-        const getInputValue = (name: string) => {
-            const element = form.elements.namedItem(name);
-            return element instanceof HTMLInputElement ? element.value : '';
-        };
+        try {
+            // Get all form inputs
+            const getInputValue = (name: string) => {
+                const element = form.elements.namedItem(name);
+                return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
+                    ? element.value
+                    : element instanceof HTMLSelectElement
+                        ? element.value
+                        : '';
+            };
 
-        const fileInput = form.elements.namedItem('nationalIdFile') as HTMLInputElement;
-        const npwpInput = form.elements.namedItem('npwpFile') as HTMLInputElement;
-        const tenorInput = form.elements.namedItem('tenor') as HTMLSelectElement;
+            const fileInput = form.elements.namedItem('nationalIdFile') as HTMLInputElement;
+            const npwpInput = form.elements.namedItem('npwpFile') as HTMLInputElement;
+            const tenorInput = form.elements.namedItem('tenor') as HTMLSelectElement;
 
-        const nationalIdFile = fileInput?.files?.[0] ? URL.createObjectURL(fileInput.files[0]) : undefined;
-        const npwpFile = npwpInput?.files?.[0] ? URL.createObjectURL(npwpInput.files[0]) : undefined;
+            // Convert files to Base64
+            let ktpBase64 = '';
+            let ktpFilename = '';
+            if (fileInput?.files?.[0]) {
+                ktpBase64 = await convertFileToBase64(fileInput.files[0]);
+                ktpFilename = fileInput.files[0].name;
+            }
 
-        const selectedCompany = pksCompanies.find(c => c.pksNumber === selectedPKS);
+            let npwpBase64 = '';
+            let npwpFilename = '';
+            if (npwpInput?.files?.[0]) {
+                npwpBase64 = await convertFileToBase64(npwpInput.files[0]);
+                npwpFilename = npwpInput.files[0].name;
+            }
 
-        setTimeout(() => {
-            const newApp: Application = {
-                id: `APP-${Math.floor(Math.random() * 10000)}`,
-                customerId: `CUST-${Math.floor(Math.random() * 10000)}`,
-                customerName: getInputValue('name'),
-                nik: getInputValue('nik'),
-                salesId: getInputValue('salesId'),
-                loanAmount: amount,
-                tenor: parseInt(tenorInput.value, 10),
-                status: 'Submitted',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                nationalIdFile,
-                // New fields
-                loanId: `LN-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`,
-                pksNumber: selectedPKS,
-                pksCompanyName: selectedCompany?.companyName,
-                kreditProduct: getInputValue('kreditProduct') === 'Other' ? otherProduct : getInputValue('kreditProduct'),
-                npwpFile,
-                debtorOccupation: getInputValue('debtorOccupation') === 'Lainnya' ? otherOccupation : getInputValue('debtorOccupation'),
-                emergencyContact: {
-                    name: getInputValue('emergencyName'),
-                    phone: getInputValue('emergencyPhone'),
-                    relationship: getInputValue('emergencyRelationship') === 'Others' ? otherRelationship : getInputValue('emergencyRelationship'),
-                },
-                income: income,
-                yearsOfService: Number(getInputValue('yearsOfService')),
-                bankingInfo: {
-                    bankName: getInputValue('bankName') === 'Lainnya' ? otherBank : getInputValue('bankName'),
-                    accountNumber: getInputValue('accountNumber'),
-                    payrollAccount,
-                    payrollAccountNumber: payrollAccount ? getInputValue('payrollAccountNumber') : undefined,
-                    existingLoans: getInputValue('existingLoans'),
-                    disbursementAccount: {
+            const selectedCompany = pksCompanies.find(c => c.pksNumber === selectedPKS);
+            const pksNumberCompany = selectedCompany
+                ? `${selectedCompany.pksNumber} - ${selectedCompany.companyName}`
+                : selectedPKS;
+
+            // Generate loan ID
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const loanId = `LN-${year}${month}${day}-${randomNum}`;
+
+            // Build the complete payload
+            const payload: LoanApplicationPayload = {
+                loanApplication: {
+                    status: 'PENDING',
+                    loanInformation: {
+                        loanId,
+                        pksNumberCompany,
+                        creditProduct: selectedProduct === 'Other' ? otherProduct : selectedProduct,
+                        salesId: getInputValue('salesId'),
+                    },
+                    customerInformation: {
+                        fullName: getInputValue('name'),
+                        nik: getInputValue('nik'),
+                        debtorOccupation: selectedOccupation === 'Lainnya' ? otherOccupation : selectedOccupation,
+                        lengthOfEmployment: `${getInputValue('yearsOfService')} years`,
+                        salary: income,
+                    },
+                    emergencyContact: {
+                        contactName: getInputValue('emergencyName'),
+                        phoneNumber: getInputValue('emergencyPhone'),
+                        relationship: selectedRelationship === 'Others' ? otherRelationship : selectedRelationship,
+                    },
+                    documents: {
+                        ktpDocumentId: '',
+                        ktpDocumentBase64: ktpBase64,
+                        ktpDocumentFilename: ktpFilename,
+                        npwpDocumentId: '',
+                        npwpDocumentBase64: npwpBase64,
+                        npwpDocumentFilename: npwpFilename,
+                    },
+                    loanDetails: {
+                        loanAmount: amount,
+                        tenor: parseInt(tenorInput.value, 10),
+                    },
+                    bankingInformation: {
+                        bankName: selectedBank === 'Lainnya' ? otherBank : selectedBank,
+                        accountNumber: getInputValue('accountNumber'),
+                        hasPayrollAccount: payrollAccount,
+                        existingLoans: getInputValue('existingLoans'),
+                    },
+                    preferredDisbursementAccount: {
                         recipientName: getInputValue('disbursementRecipientName'),
                         bankName: getInputValue('disbursementBankName'),
                         accountNumber: getInputValue('disbursementAccountNumber'),
                     },
+                    internalCheckingResult: {
+                        dhnResult: 'CLEAR',
+                        amlResult: 'LOW_RISK',
+                        centralDedupResult: '',
+                        pepFlag: false,
+                    },
                 },
             };
 
-            addApplication(newApp);
+            // Submit to API
+            const response = await submitLoanApplication(payload);
+            console.log('Application submitted successfully:', response);
+
+            // Success - navigate to dashboard
             setLoading(false);
             navigate('/');
-        }, 1000);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+            setError(errorMessage);
+            setLoading(false);
+        }
     };
 
     return (
@@ -100,6 +153,13 @@ export const NewApplication = () => {
                 <h1 className="text-2xl font-bold text-slate-900">New Application</h1>
                 <p className="text-slate-500">Initiate a new loan application for a customer.</p>
             </div>
+
+            {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800 font-medium">Error submitting application</p>
+                    <p className="text-sm text-red-600 mt-1">{error}</p>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 space-y-8">
 
