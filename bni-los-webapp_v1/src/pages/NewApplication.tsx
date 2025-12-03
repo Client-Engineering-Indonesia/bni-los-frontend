@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import { MoneyInput } from '../components/MoneyInput';
 import { submitLoanApplication } from '../services/api';
 import { convertFileToBase64 } from '../utils/fileUtils';
+import { SuccessModal } from '../components/SuccessModal';
 import type { LoanApplicationPayload } from '../types/loanApplicationAPI';
 
 export const NewApplication = () => {
@@ -11,6 +12,10 @@ export const NewApplication = () => {
     const { pksCompanies, options } = useData();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [successTitle, setSuccessTitle] = useState('');
+    const [isSuccess, setIsSuccess] = useState(false);
     const [amount, setAmount] = useState(0);
     const [income, setIncome] = useState(0);
     const [selectedPKS, setSelectedPKS] = useState('');
@@ -66,10 +71,7 @@ export const NewApplication = () => {
                 npwpFilename = npwpInput.files[0].name;
             }
 
-            const selectedCompany = pksCompanies.find(c => c.pksNumber === selectedPKS);
-            const pksNumberCompany = selectedCompany
-                ? `${selectedCompany.pksNumber} - ${selectedCompany.companyName}`
-                : selectedPKS;
+            const pksNumberCompany = selectedPKS;
 
             // Generate loan ID
             const now = new Date();
@@ -137,18 +139,38 @@ export const NewApplication = () => {
             const response = await submitLoanApplication(payload);
             console.log('Application submitted successfully:', response);
 
-            // Success - navigate to dashboard
+            // Success - show modal
             setLoading(false);
-            navigate('/');
+            setSuccessTitle('Submission Successful');
+            setSuccessMessage(response.responseMessage || 'Application has been submitted successfully.');
+            setIsSuccess(true);
+            setShowSuccessModal(true);
+
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-            setError(errorMessage);
+            // Show error modal
             setLoading(false);
+            setSuccessTitle('Submission Failed');
+            setSuccessMessage(errorMessage);
+            setIsSuccess(false);
+            setShowSuccessModal(true);
         }
     };
 
     return (
         <div className="max-w-4xl mx-auto">
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => {
+                    setShowSuccessModal(false);
+                    if (isSuccess) {
+                        navigate('/');
+                    }
+                }}
+                title={successTitle}
+                message={successMessage}
+                type={isSuccess ? 'success' : 'error'}
+            />
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-slate-900">New Application</h1>
                 <p className="text-slate-500">Initiate a new loan application for a customer.</p>

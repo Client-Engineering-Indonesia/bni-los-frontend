@@ -76,9 +76,8 @@ export interface LoanApplicationPayload {
 }
 
 export interface LoanApplicationResponse {
-    status: {
-        responseCode: string;
-        responseMessage: string;
-    };
-    applicationId?: string;
+    responseCode: string;
+    responseMessage: string;
+    piid?: string;
+    loanId?: string;
 }

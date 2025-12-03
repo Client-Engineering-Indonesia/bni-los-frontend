@@ -120,11 +120,16 @@ export async function submitLoanApplication(
 
         const data: LoanApplicationResponse = await response.json();
 
-        // Check response code
-        if (data.status.responseCode !== '00' &&
-            data.status.responseCode !== '200' &&
-            data.status.responseCode.toUpperCase() !== 'SUCCESS') {
-            throw new Error(data.status.responseMessage || 'Failed to submit loan application');
+        if (!data) {
+            throw new Error('Received empty response from server');
+        }
+
+        // Check response code - handle both string and number
+        const code = String(data?.responseCode);
+        if (code !== '00' &&
+            code !== '200' &&
+            code.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data?.responseMessage || 'Failed to submit loan application');
         }
 
         return data;
@@ -210,11 +215,16 @@ export async function rejectLoanApplication(
 
         const data = await response.json();
 
+        if (!data) {
+            throw new Error('Received empty response from server');
+        }
+
         // Check response code - API returns top-level responseCode
-        if (data.responseCode !== '00' &&
-            data.responseCode !== '200' &&
-            data.responseCode?.toUpperCase() !== 'SUCCESS') {
-            throw new Error(data.responseMessage || 'Failed to reject loan application');
+        const code = String(data?.responseCode);
+        if (code !== '00' &&
+            code !== '200' &&
+            code.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data?.responseMessage || 'Failed to reject loan application');
         }
 
         return data;
@@ -259,11 +269,16 @@ export async function submitLoanProcess(
 
         const data = await response.json();
 
+        if (!data) {
+            throw new Error('Received empty response from server');
+        }
+
         // Check response code
-        if (data.responseCode !== '00' &&
-            data.responseCode !== '200' &&
-            data.responseCode?.toUpperCase() !== 'SUCCESS') {
-            throw new Error(data.responseMessage || 'Failed to submit process');
+        const code = String(data?.responseCode);
+        if (code !== '00' &&
+            code !== '200' &&
+            code.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data?.responseMessage || 'Failed to submit process');
         }
 
         return data;
