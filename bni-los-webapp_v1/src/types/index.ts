@@ -95,6 +95,16 @@ export interface Application {
     };
     income?: number;
     yearsOfService?: number;
+    internalCheckingResult?: {
+        dhnResult?: string;
+        amlResult?: string;
+        centralDedupResult?: string;
+    };
+    externalCheckingResult?: {
+        npwpChecking?: string;
+        dukcapilChecking?: string;
+        slikChecking?: string;
+    };
 }
 
 export interface User {

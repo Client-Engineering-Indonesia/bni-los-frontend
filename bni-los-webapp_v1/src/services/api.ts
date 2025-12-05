@@ -1,6 +1,7 @@
 import type { WorklistAPIResponse } from '../types/api';
 import type { Role } from '../types';
-import type { LoanApplicationPayload, LoanApplicationResponse } from '../types/loanApplicationAPI';
+import type { LoanApplicationPayload, LoanApplicationResponse, EDDUpdatePayload } from '../types/loanApplicationAPI';
+
 
 // API Configuration
 // Using proxy path /api which will be rewritten to https://nds-webmethod.ngrok.dev:443/restv2 by Vite
@@ -287,5 +288,172 @@ export async function submitLoanProcess(
             throw error;
         }
         throw new Error('An unexpected error occurred while submitting the process.');
+    }
+}
+
+/**
+ * Update loan application for EDD resubmission
+ * @param payload - EDD update payload with piid and full loan application data
+ * @returns Promise with API response
+ */
+export async function updateEDDApplication(
+    payload: EDDUpdatePayload
+): Promise<LoanApplicationResponse> {
+    // Use proxy path to avoid CORS issues
+    const url = `${API_BASE_URL}/loan/update/edd`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${AUTH_CREDENTIALS}`,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check credentials.');
+            }
+            if (response.status === 400) {
+                throw new Error('Invalid application data. Please check all fields.');
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data: LoanApplicationResponse = await response.json();
+
+        if (!data) {
+            throw new Error('Received empty response from server');
+        }
+
+        // Check response code - handle both string and number
+        const code = String(data?.responseCode);
+        if (code !== '00' &&
+            code !== '200' &&
+            code.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data?.responseMessage || 'Failed to update EDD application');
+        }
+
+        return data;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred while updating the application.');
+    }
+}
+
+/**
+ * Revise loan application (Supervisor action with notes)
+ * @param piid - Process instance ID
+ * @param notes - Supervisor notes for the revision
+ * @returns Promise with API response
+ */
+export async function reviseLoanApplication(
+    piid: string,
+    notes: string
+): Promise<LoanApplicationResponse> {
+    // Use proxy path to avoid CORS issues
+    const url = `${API_BASE_URL}/loan/revise`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${AUTH_CREDENTIALS}`,
+            },
+            body: JSON.stringify({ piid, notes }),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check credentials.');
+            }
+            if (response.status === 400) {
+                throw new Error('Invalid request. Please check the data.');
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data: LoanApplicationResponse = await response.json();
+
+        if (!data) {
+            throw new Error('Received empty response from server');
+        }
+
+        // Check response code - handle both string and number
+        const code = String(data?.responseCode);
+        if (code !== '00' &&
+            code !== '200' &&
+            code.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data?.responseMessage || 'Failed to revise loan application');
+        }
+
+        return data;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred while revising the application.');
+    }
+}
+
+/**
+ * Submit loan for approval (Supervisor direct approval)
+ * @param piid - Process instance ID
+ * @returns Promise with API response
+ */
+export async function submitLoanForApproval(
+    piid: string
+): Promise<LoanApplicationResponse> {
+    // Use proxy path to avoid CORS issues
+    const url = `${API_BASE_URL}/loan/submit`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${AUTH_CREDENTIALS}`,
+            },
+            body: JSON.stringify({ piid }),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check credentials.');
+            }
+            if (response.status === 400) {
+                throw new Error('Invalid request. Please check the data.');
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data: LoanApplicationResponse = await response.json();
+
+        if (!data) {
+            throw new Error('Received empty response from server');
+        }
+
+        // Check response code - handle both string and number
+        const code = String(data?.responseCode);
+        if (code !== '00' &&
+            code !== '200' &&
+            code.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data?.responseMessage || 'Failed to submit loan application');
+        }
+
+        return data;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred while submitting the application.');
     }
 }

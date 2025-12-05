@@ -81,3 +81,19 @@ export interface LoanApplicationResponse {
     piid?: string;
     loanId?: string;
 }
+
+export interface EDDUpdatePayload {
+    piid: string;
+    loanApplication: {
+        loanId: string;
+        status: string;
+        loanInformation: LoanInformation;
+        customerInformation: CustomerInformation;
+        emergencyContact: EmergencyContact;
+        documents: Documents;
+        loanDetails: LoanDetails;
+        bankingInformation: BankingInformation;
+        preferredDisbursementAccount: PreferredDisbursementAccount;
+        internalCheckingResult: InternalCheckingResult;
+    };
+}

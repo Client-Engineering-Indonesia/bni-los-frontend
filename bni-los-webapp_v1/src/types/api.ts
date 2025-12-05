@@ -55,6 +55,17 @@ export interface LoanApplicationDetails {
     loanId: string;
     status: string;
     eddNotes?: string;
+    internalCheckingResult?: {
+        dhnResult?: string;
+        amlResult?: string;
+        centralDedupResult?: string;
+        pepFlag?: boolean;
+    };
+    externalCheckingResult?: {
+        npwpChecking?: string;
+        dukcapilChecking?: string;
+        slikChecking?: string;
+    };
 }
 
 // Pagination state

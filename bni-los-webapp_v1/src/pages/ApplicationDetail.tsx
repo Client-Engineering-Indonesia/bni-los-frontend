@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, FileText } from 'lucide-react';
 import type { ApplicationStatus } from '../types';
 import { MoneyInput } from '../components/MoneyInput';
-import { rejectLoanApplication, submitLoanProcess } from '../services/api';
+import { rejectLoanApplication, submitLoanProcess, updateEDDApplication, reviseLoanApplication, submitLoanForApproval, fetchWorklist } from '../services/api';
 import { SuccessModal } from '../components/SuccessModal';
+import { convertFileToBase64 } from '../utils/fileUtils';
 
 export const ApplicationDetail = () => {
     const { id } = useParams();
@@ -34,6 +35,8 @@ export const ApplicationDetail = () => {
         tenor: 0
     });
     const [eddNotes, setEddNotes] = useState('');
+    const [rejectNotes, setRejectNotes] = useState('');
+    const [showRejectModal, setShowRejectModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({
         customerName: '',
@@ -66,6 +69,24 @@ export const ApplicationDetail = () => {
             }
         }
     });
+
+    // For EDD resubmission - store actual File objects
+    const [ktpFile, setKtpFile] = useState<File | null>(null);
+    const [npwpFile, setNpwpFile] = useState<File | null>(null);
+
+    // State for ICR checking results fetched from sales worklist
+    const [icrCheckingData, setIcrCheckingData] = useState<{
+        internalCheckingResult?: {
+            dhnResult?: string;
+            amlResult?: string;
+            centralDedupResult?: string;
+        };
+        externalCheckingResult?: {
+            npwpChecking?: string;
+            dukcapilChecking?: string;
+            slikChecking?: string;
+        };
+    }>({});
 
     const application = getApplication(id || '');
 
@@ -111,6 +132,45 @@ export const ApplicationDetail = () => {
         });
         setIsEditing(true);
     };
+
+    // Fetch sales worklist data for ICR role to populate checking results
+    useEffect(() => {
+        const fetchCheckingData = async () => {
+            // Only fetch for ICR role and if we have a piid
+            if (user.role !== 'ICR' || !application.piid) {
+                return;
+            }
+
+            try {
+                // Fetch sales worklist data
+                const worklistData = await fetchWorklist(
+                    'ICR', // ICR role
+                    undefined, // no salesId needed
+                    1,
+                    100 // Fetch larger size to ensure we find the record
+                );
+
+                // Find the matching record by piid
+                const matchedRecord = worklistData.worklists.find(
+                    (item: any) => item.piid === application.piid
+                );
+
+                if (matchedRecord && matchedRecord.loanApplication) {
+                    // Extract checking results from matched record's loanApplication
+                    setIcrCheckingData({
+                        internalCheckingResult: matchedRecord.loanApplication.internalCheckingResult,
+                        externalCheckingResult: matchedRecord.loanApplication.externalCheckingResult
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to fetch ICR checking data:', error);
+                // Set empty data on error
+                setIcrCheckingData({});
+            }
+        };
+
+        fetchCheckingData();
+    }, [user.role, application.piid]); // Re-fetch when role or piid changes
 
     const handleAction = async (newStatus: ApplicationStatus, data?: any) => {
         setLoading(true);
@@ -162,15 +222,99 @@ export const ApplicationDetail = () => {
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-            alert(`Failed to process action: ${errorMessage}`);
+            alert(`Failed to process action: ${errorMessage} `);
             setLoading(false);
         }
     };
 
-    const handleEddSubmit = (e: React.FormEvent) => {
+    const handleEddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        handleAction('EDD Required', { eddNotes });
-        setShowEddModal(false);
+        setLoading(true);
+
+        try {
+            if (!application.piid) {
+                throw new Error('PIID not found for this application');
+            }
+
+            // Call revise API with notes
+            const response = await reviseLoanApplication(application.piid, eddNotes);
+
+            // Update local state after successful API call
+            updateApplicationStatus(application.id, 'EDD Required', { eddNotes });
+
+            // Show success modal
+            setSuccessTitle('EDD Request Submitted');
+            setSuccessMessage(response.responseMessage || 'EDD request has been sent successfully.');
+            setShowSuccessModal(true);
+            setShowEddModal(false);
+            setEddNotes('');
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+            setSuccessTitle('EDD Request Failed');
+            setSuccessMessage(errorMessage);
+            setShowSuccessModal(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleApproveSubmit = async () => {
+        setLoading(true);
+
+        try {
+            if (!application.piid) {
+                throw new Error('PIID not found for this application');
+            }
+
+            // Call submit API directly with piid only
+            const response = await submitLoanForApproval(application.piid);
+
+            // Update local state after successful API call
+            updateApplicationStatus(application.id, 'Analyst Review', {});
+
+            // Show success modal
+            setSuccessTitle('Approval Submitted');
+            setSuccessMessage(response.responseMessage || 'Application approved to Analyst successfully.');
+            setShowSuccessModal(true);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+            setSuccessTitle('Approval Failed');
+            setSuccessMessage(errorMessage);
+            setShowSuccessModal(true);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRejectSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            if (!application.piid) {
+                throw new Error('PIID not found for this application');
+            }
+
+            // Call revise API with reject notes
+            const response = await reviseLoanApplication(application.piid, rejectNotes);
+
+            // Update local state after successful API call
+            updateApplicationStatus(application.id, 'Rejected', { rejectNotes });
+
+            // Show success modal
+            setSuccessTitle('Application Rejected');
+            setSuccessMessage(response.responseMessage || 'Application has been rejected successfully.');
+            setShowSuccessModal(true);
+            setShowRejectModal(false);
+            setRejectNotes('');
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+            setSuccessTitle('Rejection Failed');
+            setSuccessMessage(errorMessage);
+            setShowSuccessModal(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleRecalculateSubmit = (e: React.FormEvent) => {
@@ -186,25 +330,120 @@ export const ApplicationDetail = () => {
         }, 1000);
     };
 
-    const handleResubmit = (e: React.FormEvent) => {
+    const handleResubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        handleAction('Submitted', {
-            customerName: editForm.customerName,
-            nik: editForm.nik,
-            loanAmount: editForm.loanAmount,
-            tenor: editForm.tenor,
-            nationalIdFile: editForm.nationalIdFile,
-            pksNumber: editForm.pksNumber,
-            pksCompanyName: pksCompanies.find(p => p.pksNumber === editForm.pksNumber)?.companyName,
-            kreditProduct: editForm.kreditProduct,
-            debtorOccupation: editForm.debtorOccupation,
-            income: editForm.income,
-            yearsOfService: editForm.yearsOfService,
-            npwpFile: editForm.npwpFile,
-            emergencyContact: editForm.emergencyContact,
-            bankingInfo: editForm.bankingInfo,
-            eddNotes: undefined // Clear EDD notes on resubmit
-        });
+        setLoading(true);
+
+        try {
+            if (!application.piid || !application.loanId) {
+                throw new Error('Application data is incomplete (missing piid or loanId)');
+            }
+
+            // Convert files to Base64
+            let ktpBase64 = '';
+            let ktpFilename = '';
+            if (ktpFile) {
+                ktpBase64 = await convertFileToBase64(ktpFile);
+                ktpFilename = ktpFile.name;
+            }
+
+            let npwpBase64 = '';
+            let npwpFilename = '';
+            if (npwpFile) {
+                npwpBase64 = await convertFileToBase64(npwpFile);
+                npwpFilename = npwpFile.name;
+            }
+
+            // Build EDD update payload
+            const payload = {
+                piid: application.piid,
+                loanApplication: {
+                    loanId: application.loanId,
+                    status: 'PENDING',
+                    loanInformation: {
+                        loanId: application.loanId,
+                        pksNumberCompany: editForm.pksNumber,
+                        creditProduct: editForm.kreditProduct,
+                        salesId: application.salesId || ''
+                    },
+                    customerInformation: {
+                        fullName: editForm.customerName,
+                        nik: editForm.nik,
+                        debtorOccupation: editForm.debtorOccupation,
+                        lengthOfEmployment: `${editForm.yearsOfService} years`,
+                        salary: editForm.income
+                    },
+                    emergencyContact: {
+                        contactName: editForm.emergencyContact.name,
+                        phoneNumber: editForm.emergencyContact.phone,
+                        relationship: editForm.emergencyContact.relationship
+                    },
+                    documents: {
+                        ktpDocumentId: '',
+                        ktpDocumentBase64: ktpBase64,
+                        ktpDocumentFilename: ktpFilename,
+                        npwpDocumentId: '',
+                        npwpDocumentBase64: npwpBase64,
+                        npwpDocumentFilename: npwpFilename
+                    },
+                    loanDetails: {
+                        loanAmount: editForm.loanAmount,
+                        tenor: editForm.tenor
+                    },
+                    bankingInformation: {
+                        bankName: editForm.bankingInfo.bankName,
+                        accountNumber: editForm.bankingInfo.accountNumber,
+                        hasPayrollAccount: editForm.bankingInfo.payrollAccount,
+                        existingLoans: editForm.bankingInfo.existingLoans
+                    },
+                    preferredDisbursementAccount: {
+                        recipientName: editForm.bankingInfo.disbursementAccount.recipientName,
+                        bankName: editForm.bankingInfo.disbursementAccount.bankName,
+                        accountNumber: editForm.bankingInfo.disbursementAccount.accountNumber
+                    },
+                    internalCheckingResult: {
+                        dhnResult: 'CLEAR',
+                        amlResult: 'LOW_RISK',
+                        centralDedupResult: '',
+                        pepFlag: false
+                    }
+                }
+            };
+
+            // Call updateEDDApplication API
+            const response = await updateEDDApplication(payload);
+
+            // Update local state after successful API call
+            updateApplicationStatus(application.id, 'Submitted', {
+                customerName: editForm.customerName,
+                nik: editForm.nik,
+                loanAmount: editForm.loanAmount,
+                tenor: editForm.tenor,
+                nationalIdFile: editForm.nationalIdFile,
+                pksNumber: editForm.pksNumber,
+                pksCompanyName: pksCompanies.find(p => p.pksNumber === editForm.pksNumber)?.companyName,
+                kreditProduct: editForm.kreditProduct,
+                debtorOccupation: editForm.debtorOccupation,
+                income: editForm.income,
+                yearsOfService: editForm.yearsOfService,
+                npwpFile: editForm.npwpFile,
+                emergencyContact: editForm.emergencyContact,
+                bankingInfo: editForm.bankingInfo,
+                eddNotes: undefined // Clear EDD notes on resubmit
+            });
+
+            // Show success modal
+            setSuccessTitle('EDD Resubmission Successful');
+            setSuccessMessage(response.responseMessage || 'Application has been resubmitted successfully.');
+            setShowSuccessModal(true);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+            setSuccessTitle('Resubmission Failed');
+            setSuccessMessage(errorMessage);
+            setShowSuccessModal(true);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDisbursementSubmit = (e: React.FormEvent) => {
@@ -345,11 +584,11 @@ export const ApplicationDetail = () => {
                     return (
                         <div className="flex gap-3">
                             <button
-                                onClick={() => handleAction('Analyst Review')}
+                                onClick={handleApproveSubmit}
                                 disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                             >
-                                <CheckCircle size={18} /> Approve to Analyst
+                                <CheckCircle size={18} /> {loading ? 'Processing...' : 'Approve to Analyst'}
                             </button>
                             <button
                                 onClick={() => setShowEddModal(true)}
@@ -359,7 +598,7 @@ export const ApplicationDetail = () => {
                                 <AlertTriangle size={18} /> Request EDD
                             </button>
                             <button
-                                onClick={() => handleAction('Rejected')}
+                                onClick={() => setShowRejectModal(true)}
                                 disabled={loading}
                                 className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                             >
@@ -551,7 +790,7 @@ export const ApplicationDetail = () => {
                                     </select>
                                 ) : (
                                     <p className="font-medium text-slate-900">
-                                        {application.pksNumber ? `${application.pksNumber} - ${application.pksCompanyName}` : '-'}
+                                        {application.pksNumber ? `${application.pksNumber} - ${application.pksCompanyName} ` : '-'}
                                     </p>
                                 )}
                             </div>
@@ -633,7 +872,7 @@ export const ApplicationDetail = () => {
                                     />
                                 ) : (
                                     <p className="font-medium text-slate-900">
-                                        {application.income ? `Rp ${application.income.toLocaleString('id-ID')}` : '-'}
+                                        {application.income ? `Rp ${application.income.toLocaleString('id-ID')} ` : '-'}
                                     </p>
                                 )}
                             </div>
@@ -730,6 +969,7 @@ export const ApplicationDetail = () => {
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) {
+                                                    setKtpFile(file); // Store File object for base64 conversion
                                                     setEditForm({ ...editForm, nationalIdFile: URL.createObjectURL(file) });
                                                 }
                                             }}
@@ -760,6 +1000,7 @@ export const ApplicationDetail = () => {
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) {
+                                                    setNpwpFile(file); // Store File object for base64 conversion
                                                     setEditForm({ ...editForm, npwpFile: URL.createObjectURL(file) });
                                                 }
                                             }}
@@ -983,44 +1224,132 @@ export const ApplicationDetail = () => {
                 </div>
             </div>
 
-            {/* Additional Information Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-                <div className="p-6 border-b border-slate-100">
-                    <h3 className="text-lg font-semibold text-slate-900">Additional Information</h3>
+            {/* Additional Information - Role Based */}
+            {user.role !== 'Sales' && (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+                    <div className="p-6 border-b border-slate-100">
+                        <h3 className="text-lg font-semibold text-slate-900">Additional Information</h3>
+                    </div>
+
+                    {/* ICR Role: Internal and External Checking Tables */}
+                    {user.role === 'ICR' && (
+                        <div className="p-6 space-y-6">
+                            {/* Internal Checking Table - Only show when status is Internal Checking or later */}
+                            {(application.status === 'Internal Checking' ||
+                                application.status === 'External Checking' ||
+                                application.status === 'Supervisor Review' ||
+                                application.status === 'Analyst Review' ||
+                                application.status === 'Approval' ||
+                                application.status === 'Approved' ||
+                                application.status === 'Disbursement Ready' ||
+                                application.status === 'Disbursed') && (
+                                    <div>
+                                        <h4 className="text-md font-semibold text-slate-800 mb-3">Internal Checking</h4>
+                                        <table className="w-full text-sm text-left text-slate-600">
+                                            <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                                                <tr>
+                                                    <th className="px-6 py-3">Check Type</th>
+                                                    <th className="px-6 py-3">Result</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr className="bg-white border-b">
+                                                    <td className="px-6 py-4 font-medium text-slate-900">DHN Result</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult?.dhnResult === 'CLEAR'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-slate-100 text-slate-800'
+                                                            }`}>
+                                                            {icrCheckingData.internalCheckingResult?.dhnResult || 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr className="bg-white border-b">
+                                                    <td className="px-6 py-4 font-medium text-slate-900">AML Result</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult?.amlResult === 'LOW_RISK'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-slate-100 text-slate-800'
+                                                            }`}>
+                                                            {icrCheckingData.internalCheckingResult?.amlResult || 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr className="bg-white">
+                                                    <td className="px-6 py-4 font-medium text-slate-900">Central Dedup Result</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult?.centralDedupResult === 'NO_DUPLICATION'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-slate-100 text-slate-800'
+                                                            }`}>
+                                                            {icrCheckingData.internalCheckingResult?.centralDedupResult || 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                            {/* External Checking Table - Only show when status is External Checking or later */}
+                            {(application.status === 'External Checking' ||
+                                application.status === 'Supervisor Review' ||
+                                application.status === 'Analyst Review' ||
+                                application.status === 'Approval' ||
+                                application.status === 'Approved' ||
+                                application.status === 'Disbursement Ready' ||
+                                application.status === 'Disbursed') && (
+                                    <div>
+                                        <h4 className="text-md font-semibold text-slate-800 mb-3">External Checking</h4>
+                                        <table className="w-full text-sm text-left text-slate-600">
+                                            <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                                                <tr>
+                                                    <th className="px-6 py-3">Check Type</th>
+                                                    <th className="px-6 py-3">Result</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr className="bg-white border-b">
+                                                    <td className="px-6 py-4 font-medium text-slate-900">NPWP Checking</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult?.npwpChecking === 'PASS'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-slate-100 text-slate-800'
+                                                            }`}>
+                                                            {icrCheckingData.externalCheckingResult?.npwpChecking || 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr className="bg-white border-b">
+                                                    <td className="px-6 py-4 font-medium text-slate-900">Dukcapil Checking</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult?.dukcapilChecking === 'PASS'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-slate-100 text-slate-800'
+                                                            }`}>
+                                                            {icrCheckingData.externalCheckingResult?.dukcapilChecking || 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr className="bg-white">
+                                                    <td className="px-6 py-4 font-medium text-slate-900">SLIK Checking</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult?.slikChecking === 'PASS'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-slate-100 text-slate-800'
+                                                            }`}>
+                                                            {icrCheckingData.externalCheckingResult?.slikChecking || 'N/A'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                        </div>
+                    )}
                 </div>
-                <div className="p-6">
-                    <table className="w-full text-sm text-left text-slate-600">
-                        <thead className="text-xs text-slate-700 uppercase bg-slate-50">
-                            <tr>
-                                <th className="px-6 py-3">Attribute</th>
-                                <th className="px-6 py-3">Value</th>
-                                <th className="px-6 py-3">Verified By</th>
-                                <th className="px-6 py-3">Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="bg-white border-b">
-                                <td className="px-6 py-4 font-medium text-slate-900">Employment Status</td>
-                                <td className="px-6 py-4">Permanent</td>
-                                <td className="px-6 py-4">System</td>
-                                <td className="px-6 py-4">2023-10-25</td>
-                            </tr>
-                            <tr className="bg-white border-b">
-                                <td className="px-6 py-4 font-medium text-slate-900">Annual Income</td>
-                                <td className="px-6 py-4">Rp 150.000.000</td>
-                                <td className="px-6 py-4">System</td>
-                                <td className="px-6 py-4">2023-10-25</td>
-                            </tr>
-                            <tr className="bg-white">
-                                <td className="px-6 py-4 font-medium text-slate-900">Credit Score</td>
-                                <td className="px-6 py-4">750 (High)</td>
-                                <td className="px-6 py-4">System</td>
-                                <td className="px-6 py-4">2023-10-25</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            )}
 
             {/* Approver Checklist */}
             {(user.role === 'Approver' || application.status === 'Approval' || application.status === 'Disbursement Ready' || application.status === 'Disbursed') && (
@@ -1211,6 +1540,47 @@ export const ApplicationDetail = () => {
                                         className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
                                     >
                                         Submit Request
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
+
+            {/* Reject Modal */}
+            {
+                showRejectModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                            <h2 className="text-xl font-bold text-slate-900 mb-4">Reject Application</h2>
+                            <form onSubmit={handleRejectSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Rejection Reason</label>
+                                    <textarea
+                                        required
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                                        rows={4}
+                                        placeholder="Enter reason for rejection..."
+                                        value={rejectNotes}
+                                        onChange={e => setRejectNotes(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowRejectModal(false)}
+                                        className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                                    >
+                                        {loading ? 'Submitting...' : 'Reject'}
                                     </button>
                                 </div>
                             </form>
