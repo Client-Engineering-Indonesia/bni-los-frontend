@@ -121,5 +121,5 @@ else
     print_info "PM2 not installed. Starting application directly on port $PORT..."
     print_info "Note: This will run in the foreground. Press Ctrl+C to stop."
     echo ""
-    PORT=$PORT npm run preview
+    npm run preview -- --port $PORT --host
 fi
