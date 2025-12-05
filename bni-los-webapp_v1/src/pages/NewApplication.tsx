@@ -199,7 +199,7 @@ export const NewApplication = () => {
                             >
                                 <option value="">Select PKS Company</option>
                                 {pksCompanies.map((company) => (
-                                    <option key={company.id} value={company.pksNumber}>
+                                    <option key={company.id} value={`${company.pksNumber} - ${company.companyName}`}>
                                         {company.pksNumber} - {company.companyName}
                                     </option>
                                 ))}

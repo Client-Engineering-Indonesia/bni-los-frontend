@@ -28,22 +28,46 @@ export function mapWorklistToApplication(item: WorklistItem): Application {
         createdAt: item.date,
         updatedAt: item.date,
         salesId,
-        piid: item.piid, // Add PIID for reject API
+        piid: item.piid,
         loanId: loanApplication.loanInformation?.loanId || loanApplication.loanId,
         pksNumber: loanApplication.loanInformation?.pksNumberCompany || '',
         kreditProduct: loanApplication.loanInformation?.creditProduct || '',
         debtorOccupation: loanApplication.customerInformation?.debtorOccupation || '',
+        income: loanApplication.customerInformation?.salary || 0,
+        yearsOfService: loanApplication.customerInformation?.lengthOfEmployment
+            ? parseInt(loanApplication.customerInformation.lengthOfEmployment.replace(/\D/g, '')) || 0
+            : 0,
         eddNotes: loanApplication.eddNotes,
+        nationalIdFile: loanApplication.documents?.ktpDocumentId || undefined,
+        npwpFile: loanApplication.documents?.npwpDocumentId || undefined,
+        emergencyContact: {
+            name: loanApplication.emergencyContact?.contactName || '',
+            phone: loanApplication.emergencyContact?.phoneNumber || '',
+            relationship: loanApplication.emergencyContact?.relationship || '',
+        },
         bankingInfo: {
             bankName: loanApplication.bankingInformation?.bankName || '',
             accountNumber: loanApplication.bankingInformation?.accountNumber || '',
             payrollAccount: loanApplication.bankingInformation?.hasPayrollAccount || false,
+            payrollAccountNumber: loanApplication.bankingInformation?.payrollAccountNumber || '',
+            existingLoans: loanApplication.bankingInformation?.existingLoans || '',
             disbursementAccount: {
                 recipientName: loanApplication.preferredDisbursementAccount?.recipientName || '',
                 bankName: loanApplication.preferredDisbursementAccount?.bankName || '',
                 accountNumber: loanApplication.preferredDisbursementAccount?.accountNumber || '',
             },
         },
+        internalCheckingResult: {
+            dhnResult: loanApplication.internalCheckingResult?.dhnResult || '',
+            amlResult: loanApplication.internalCheckingResult?.amlResult || '',
+            centralDedupResult: loanApplication.internalCheckingResult?.centralDedupResult || '',
+        },
+        externalCheckingResult: {
+            npwpChecking: loanApplication.externalCheckingResult?.npwpChecking || '',
+            dukcapilChecking: loanApplication.externalCheckingResult?.dukcapilChecking || '',
+            slikChecking: loanApplication.externalCheckingResult?.slikChecking || '',
+        },
+        loanApplication: loanApplication
     };
 }
 

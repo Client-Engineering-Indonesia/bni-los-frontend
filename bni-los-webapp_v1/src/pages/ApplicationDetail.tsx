@@ -1,1642 +1,2638 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useData } from '../context/DataContext';
-import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, FileText } from 'lucide-react';
-import type { ApplicationStatus } from '../types';
-import { MoneyInput } from '../components/MoneyInput';
-import { rejectLoanApplication, submitLoanProcess, updateEDDApplication, reviseLoanApplication, submitLoanForApproval, fetchWorklist } from '../services/api';
-import { SuccessModal } from '../components/SuccessModal';
-import { convertFileToBase64 } from '../utils/fileUtils';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useData } from "../context/DataContext";
+import { useAuth } from "../context/AuthContext";
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  FileText,
+} from "lucide-react";
+import type { ApplicationStatus } from "../types";
+import { MoneyInput } from "../components/MoneyInput";
+import {
+  rejectLoanApplication,
+  submitLoanProcess,
+  updateEDDApplication,
+  reviseLoanApplication,
+  submitLoanForApproval,
+  fetchWorklist,
+  recalculateLoanApplication,
+} from "../services/api";
+import { SuccessModal } from "../components/SuccessModal";
+import { convertFileToBase64 } from "../utils/fileUtils";
 
 export const ApplicationDetail = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const { getApplication, updateApplicationStatus, deleteApplication, pksCompanies, options } = useData();
-    const { user } = useAuth();
-    const [loading, setLoading] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [showDisbursementModal, setShowDisbursementModal] = useState(false);
-    const [disbursementForm, setDisbursementForm] = useState({
-        accountNumber: '',
-        bankName: '',
-        amount: 0,
-        date: new Date().toISOString().split('T')[0],
-        notes: ''
-    });
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const {
+    getApplication,
+    updateApplicationStatus,
+    deleteApplication,
+    pksCompanies,
+    options,
+  } = useData();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDisbursementModal, setShowDisbursementModal] = useState(false);
+  const [disbursementForm, setDisbursementForm] = useState({
+    accountNumber: "",
+    bankName: "",
+    amount: 0,
+    date: new Date().toISOString().split("T")[0],
+    notes: "",
+  });
 
-    const [showEddModal, setShowEddModal] = useState(false);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [successTitle, setSuccessTitle] = useState('');
-    const [showRecalculateModal, setShowRecalculateModal] = useState(false);
-    const [recalculateForm, setRecalculateForm] = useState({
-        loanAmount: 0,
-        tenor: 0
+  const [responseData, setResponseData] = useState<any>(null);
+
+  const [showEddModal, setShowEddModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [successTitle, setSuccessTitle] = useState("");
+  const [showRecalculateModal, setShowRecalculateModal] = useState(false);
+  const [recalculateForm, setRecalculateForm] = useState({
+    loanAmount: 0,
+    tenor: 0,
+  });
+  const [eddNotes, setEddNotes] = useState("");
+  const [rejectNotes, setRejectNotes] = useState("");
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    customerName: "",
+    nik: "",
+    loanAmount: 0,
+    tenor: 12,
+    nationalIdFile: undefined as string | undefined,
+    // New fields
+    pksNumber: "",
+    kreditProduct: "",
+    debtorOccupation: "",
+    income: 0,
+    yearsOfService: 0,
+    npwpFile: undefined as string | undefined,
+    emergencyContact: {
+      name: "",
+      phone: "",
+      relationship: "",
+    },
+    bankingInfo: {
+      bankName: "",
+      accountNumber: "",
+      payrollAccount: false,
+      payrollAccountNumber: "",
+      existingLoans: "",
+      disbursementAccount: {
+        recipientName: "",
+        bankName: "",
+        accountNumber: "",
+      },
+    },
+  });
+
+  // For EDD resubmission - store actual File objects
+  const [ktpFile, setKtpFile] = useState<File | null>(null);
+  const [npwpFile, setNpwpFile] = useState<File | null>(null);
+  const [eddDocument1File, setEddDocument1File] = useState<File | null>(null);
+  const [eddDocument2File, setEddDocument2File] = useState<File | null>(null);
+
+  // State for ICR checking results fetched from sales worklist
+  const [icrCheckingData, setIcrCheckingData] = useState<{
+    internalCheckingResult?: {
+      dhnResult?: string;
+      amlResult?: string;
+      centralDedupResult?: string;
+      pepFlag?: boolean;
+    };
+    externalCheckingResult?: {
+      npwpChecking?: string;
+      dukcapilChecking?: string;
+      slikChecking?: string;
+    };
+    limitCalculation?: {
+      tenor?: string;
+      creditLimit?: string;
+      tipeCredit?: string;
+      interestRate?: string;
+      penaltyFee?: string;
+      provisionFee?: string;
+      administrationFee?: string;
+      psjtAdministrationFee?: string;
+      DSR?: string;
+      installment?: number;
+      creditScore?: string;
+    };
+  }>({});
+
+  const application = getApplication(id || "");
+
+  if (!application || !user) {
+    return <div>Application not found</div>;
+  }
+
+  useEffect(() => {
+    const load = async () => {
+      const worklistData = await fetchWorklist(user.role, undefined, 1, 100);
+
+      const matchedRecord = worklistData.worklists.find(
+        (item: any) => item.piid === application.piid
+      );
+
+      setResponseData(matchedRecord ?? null);
+    };
+
+    load();
+  }, [application.piid]);
+
+  // Initialize recalculate form
+  if (showRecalculateModal && recalculateForm.loanAmount === 0) {
+    setRecalculateForm({
+      loanAmount: application.loanAmount,
+      tenor: application.tenor,
     });
-    const [eddNotes, setEddNotes] = useState('');
-    const [rejectNotes, setRejectNotes] = useState('');
-    const [showRejectModal, setShowRejectModal] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState({
-        customerName: '',
-        nik: '',
-        loanAmount: 0,
-        tenor: 12,
-        nationalIdFile: undefined as string | undefined,
-        // New fields
-        pksNumber: '',
-        kreditProduct: '',
-        debtorOccupation: '',
-        income: 0,
-        yearsOfService: 0,
-        npwpFile: undefined as string | undefined,
-        emergencyContact: {
-            name: '',
-            phone: '',
-            relationship: ''
+  }
+
+  // Initialize edit form when application loads or edit mode starts
+  const startEditing = () => {
+    setEditForm({
+      customerName: application.customerName,
+      nik: application.nik || "",
+      loanAmount: application.loanAmount,
+      tenor: application.tenor,
+      nationalIdFile: application.nationalIdFile,
+      pksNumber: application.pksNumber || "",
+      kreditProduct: application.kreditProduct || "",
+      debtorOccupation: application.debtorOccupation || "",
+      income: application.income || 0,
+      yearsOfService: application.yearsOfService || 0,
+      npwpFile: application.npwpFile,
+      emergencyContact: application.emergencyContact || {
+        name: "",
+        phone: "",
+        relationship: "",
+      },
+      bankingInfo: {
+        bankName: application.bankingInfo?.bankName || "",
+        accountNumber: application.bankingInfo?.accountNumber || "",
+        payrollAccount: application.bankingInfo?.payrollAccount || false,
+        payrollAccountNumber:
+          application.bankingInfo?.payrollAccountNumber || "",
+        existingLoans: application.bankingInfo?.existingLoans || "",
+        disbursementAccount: application.bankingInfo?.disbursementAccount || {
+          recipientName: "",
+          bankName: "",
+          accountNumber: "",
         },
-        bankingInfo: {
-            bankName: '',
-            accountNumber: '',
-            payrollAccount: false,
-            payrollAccountNumber: '',
-            existingLoans: '',
-            disbursementAccount: {
-                recipientName: '',
-                bankName: '',
-                accountNumber: ''
-            }
-        }
+      },
     });
+    setIsEditing(true);
+  };
 
-    // For EDD resubmission - store actual File objects
-    const [ktpFile, setKtpFile] = useState<File | null>(null);
-    const [npwpFile, setNpwpFile] = useState<File | null>(null);
+  // Fetch sales worklist data to populate checking results for all roles (except Sales)
+  useEffect(() => {
+    const fetchCheckingData = async () => {
+      // Skip for Sales role or if we don't have a piid
+      if (user.role === "Sales" || !application.piid) {
+        return;
+      }
 
-    // State for ICR checking results fetched from sales worklist
-    const [icrCheckingData, setIcrCheckingData] = useState<{
-        internalCheckingResult?: {
-            dhnResult?: string;
-            amlResult?: string;
-            centralDedupResult?: string;
-        };
-        externalCheckingResult?: {
-            npwpChecking?: string;
-            dukcapilChecking?: string;
-            slikChecking?: string;
-        };
-    }>({});
+      try {
+        // Fetch worklist data based on role
+        const worklistData = await fetchWorklist(
+          user.role, // Use current user's role
+          undefined, // no salesId needed
+          1,
+          100 // Fetch larger size to ensure we find the record
+        );
 
-    const application = getApplication(id || '');
+        // Find the matching record by piid
+        const matchedRecord = worklistData.worklists.find(
+          (item: any) => item.piid === application.piid
+        );
 
-    if (!application || !user) {
-        return <div>Application not found</div>;
+        setResponseData(matchedRecord);
+
+        if (matchedRecord && matchedRecord.loanApplication) {
+          // Extract checking results and limit calculation from matched record's loanApplication
+          setIcrCheckingData({
+            internalCheckingResult:
+              matchedRecord.loanApplication.internalCheckingResult,
+            externalCheckingResult:
+              matchedRecord.loanApplication.externalCheckingResult,
+            limitCalculation: matchedRecord.loanApplication.limitCalculation,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch checking data:", error);
+        // Set empty data on error
+        setIcrCheckingData({});
+      }
+    };
+
+    fetchCheckingData();
+  }, [user.role, application.piid]); // Re-fetch when role or piid changes
+
+  const recalculate = async () => {
+    setLoading(true);
+
+    try {
+      const loanDetail = {
+        loanAmount: recalculateForm.loanAmount,
+        tenor: recalculateForm.tenor,
+      };
+
+      // Add null check for loanApplication
+      if (!application.loanApplication) {
+        throw new Error('Loan application data is missing');
+      }
+
+      application.loanApplication.loanDetails = loanDetail;
+
+      const response = await recalculateLoanApplication(application);
+
+      const icr = icrCheckingData;
+
+      icr.limitCalculation = {
+        tenor: response.loanApplication.limitCalculation.tenor,
+        creditLimit: response.loanApplication.limitCalculation.creditLimit,
+        tipeCredit: response.loanApplication.limitCalculation.tipeCredit,
+        interestRate: response.loanApplication.limitCalculation.interestRate,
+        penaltyFee: response.loanApplication.limitCalculation.penaltyFee,
+        provisionFee: response.loanApplication.limitCalculation.provisionFee,
+        administrationFee:
+          response.loanApplication.limitCalculation.administrationFee,
+        psjtAdministrationFee:
+          response.loanApplication.limitCalculation.psjtAdministrationFee,
+        DSR: response.loanApplication.limitCalculation.DSR,
+        installment: response.loanApplication.limitCalculation.installment,
+        creditScore: response.loanApplication.limitCalculation.creditScore,
+      };
+
+      setIcrCheckingData(icr);
+
+      setLoading(false);
+
+      setShowRecalculateModal(false);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      alert(`Failed to process action: ${errorMessage} `);
+      setShowRecalculateModal(false);
+    }
+  };
+
+  // Handle loan disbursement for Operations role
+  const handleDisburse = async () => {
+    // Validate PIID exists
+    if (!application.piid) {
+      setSuccessTitle("Disbursement Failed");
+      setSuccessMessage("Application PIID is missing. Cannot process disbursement.");
+      setShowSuccessModal(true);
+      return;
     }
 
-    // Initialize recalculate form
-    if (showRecalculateModal && recalculateForm.loanAmount === 0) {
-        setRecalculateForm({
-            loanAmount: application.loanAmount,
-            tenor: application.tenor
-        });
+    setLoading(true);
+
+    try {
+      // Call submit API with PIID from application object
+      const response = await submitLoanForApproval(application.piid);
+
+      // Update local state
+      updateApplicationStatus(application.id, "Disbursed");
+
+      // Show success notification
+      setSuccessTitle("Disbursement Successful");
+      setSuccessMessage(
+        response.responseMessage ||
+        `Loan has been successfully disbursed. PIID: ${application.piid}`
+      );
+      setShowSuccessModal(true);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      setSuccessTitle("Disbursement Failed");
+      setSuccessMessage(errorMessage);
+      setShowSuccessModal(true);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Initialize edit form when application loads or edit mode starts
-    const startEditing = () => {
-        setEditForm({
-            customerName: application.customerName,
-            nik: application.nik || '',
-            loanAmount: application.loanAmount,
-            tenor: application.tenor,
-            nationalIdFile: application.nationalIdFile,
-            pksNumber: application.pksNumber || '',
-            kreditProduct: application.kreditProduct || '',
-            debtorOccupation: application.debtorOccupation || '',
-            income: application.income || 0,
-            yearsOfService: application.yearsOfService || 0,
-            npwpFile: application.npwpFile,
-            emergencyContact: application.emergencyContact || { name: '', phone: '', relationship: '' },
-            bankingInfo: {
-                bankName: application.bankingInfo?.bankName || '',
-                accountNumber: application.bankingInfo?.accountNumber || '',
-                payrollAccount: application.bankingInfo?.payrollAccount || false,
-                payrollAccountNumber: application.bankingInfo?.payrollAccountNumber || '',
-                existingLoans: application.bankingInfo?.existingLoans || '',
-                disbursementAccount: application.bankingInfo?.disbursementAccount || {
-                    recipientName: '',
-                    bankName: '',
-                    accountNumber: ''
-                }
-            }
-        });
-        setIsEditing(true);
-    };
+  const handleAction = async (newStatus: ApplicationStatus, data?: any) => {
+    setLoading(true);
 
-    // Fetch sales worklist data for ICR role to populate checking results
-    useEffect(() => {
-        const fetchCheckingData = async () => {
-            // Only fetch for ICR role and if we have a piid
-            if (user.role !== 'ICR' || !application.piid) {
-                return;
-            }
-
-            try {
-                // Fetch sales worklist data
-                const worklistData = await fetchWorklist(
-                    'ICR', // ICR role
-                    undefined, // no salesId needed
-                    1,
-                    100 // Fetch larger size to ensure we find the record
-                );
-
-                // Find the matching record by piid
-                const matchedRecord = worklistData.worklists.find(
-                    (item: any) => item.piid === application.piid
-                );
-
-                if (matchedRecord && matchedRecord.loanApplication) {
-                    // Extract checking results from matched record's loanApplication
-                    setIcrCheckingData({
-                        internalCheckingResult: matchedRecord.loanApplication.internalCheckingResult,
-                        externalCheckingResult: matchedRecord.loanApplication.externalCheckingResult
-                    });
-                }
-            } catch (error) {
-                console.error('Failed to fetch ICR checking data:', error);
-                // Set empty data on error
-                setIcrCheckingData({});
-            }
-        };
-
-        fetchCheckingData();
-    }, [user.role, application.piid]); // Re-fetch when role or piid changes
-
-    const handleAction = async (newStatus: ApplicationStatus, data?: any) => {
-        setLoading(true);
-
-        try {
-            // Special handling for rejection - call API
-            if (newStatus === 'Rejected') {
-                if (!application.piid) {
-                    throw new Error('PIID not found for this application');
-                }
-
-                // Call reject API
-                const response = await rejectLoanApplication(application.piid);
-
-                // Update local state after successful API call
-                updateApplicationStatus(application.id, newStatus, data);
-
-                // Show success modal
-                setSuccessTitle('Application Rejected');
-                setSuccessMessage(response.result || 'Application has been rejected successfully.');
-                setShowSuccessModal(true);
-                setLoading(false);
-            }
-            // Special handling for Internal Checking (Submit Process), External Checking, Supervisor Review, or Analyst Review (Approve)
-            else if (newStatus === 'Internal Checking' || newStatus === 'External Checking' || newStatus === 'Supervisor Review' || newStatus === 'Analyst Review') {
-                if (!application.piid) {
-                    throw new Error('PIID not found for this application');
-                }
-
-                // Call submit API
-                const response = await submitLoanProcess(application.piid);
-
-                // Update local state after successful API call
-                updateApplicationStatus(application.id, newStatus, data);
-
-                // Show success modal
-                setSuccessTitle('Process Submitted');
-                setSuccessMessage(response.result || 'Process has been submitted successfully.');
-                setShowSuccessModal(true);
-                setLoading(false);
-            }
-            else {
-                // For other statuses, just update local state (mock)
-                setTimeout(() => {
-                    updateApplicationStatus(application.id, newStatus, data);
-                    setLoading(false);
-                    navigate('/');
-                }, 1000);
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-            alert(`Failed to process action: ${errorMessage} `);
-            setLoading(false);
+    try {
+      // Special handling for rejection - call API
+      if (newStatus === "Rejected") {
+        if (!application.piid) {
+          throw new Error("PIID not found for this application");
         }
-    };
 
-    const handleEddSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+        // Call reject API
+        const response = await rejectLoanApplication(application.piid);
 
-        try {
-            if (!application.piid) {
-                throw new Error('PIID not found for this application');
-            }
+        // Update local state after successful API call
+        updateApplicationStatus(application.id, newStatus, data);
 
-            // Call revise API with notes
-            const response = await reviseLoanApplication(application.piid, eddNotes);
-
-            // Update local state after successful API call
-            updateApplicationStatus(application.id, 'EDD Required', { eddNotes });
-
-            // Show success modal
-            setSuccessTitle('EDD Request Submitted');
-            setSuccessMessage(response.responseMessage || 'EDD request has been sent successfully.');
-            setShowSuccessModal(true);
-            setShowEddModal(false);
-            setEddNotes('');
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-            setSuccessTitle('EDD Request Failed');
-            setSuccessMessage(errorMessage);
-            setShowSuccessModal(true);
-        } finally {
-            setLoading(false);
+        // Show success modal
+        setSuccessTitle("Application Rejected");
+        setSuccessMessage(
+          response.result || "Application has been rejected successfully."
+        );
+        setShowSuccessModal(true);
+        setLoading(false);
+      }
+      // Special handling for Internal Checking (Submit Process), External Checking, Supervisor Review, or Analyst Review (Approve)
+      else if (
+        newStatus === "Internal Checking" ||
+        newStatus === "External Checking" ||
+        newStatus === "Supervisor Review" ||
+        newStatus === "Analyst Review"
+      ) {
+        if (!application.piid) {
+          throw new Error("PIID not found for this application");
         }
-    };
 
-    const handleApproveSubmit = async () => {
-        setLoading(true);
+        // Call submit API
+        const response = await submitLoanProcess(application.piid);
 
-        try {
-            if (!application.piid) {
-                throw new Error('PIID not found for this application');
-            }
+        // Update local state after successful API call
+        updateApplicationStatus(application.id, newStatus, data);
 
-            // Call submit API directly with piid only
-            const response = await submitLoanForApproval(application.piid);
-
-            // Update local state after successful API call
-            updateApplicationStatus(application.id, 'Analyst Review', {});
-
-            // Show success modal
-            setSuccessTitle('Approval Submitted');
-            setSuccessMessage(response.responseMessage || 'Application approved to Analyst successfully.');
-            setShowSuccessModal(true);
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-            setSuccessTitle('Approval Failed');
-            setSuccessMessage(errorMessage);
-            setShowSuccessModal(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRejectSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            if (!application.piid) {
-                throw new Error('PIID not found for this application');
-            }
-
-            // Call revise API with reject notes
-            const response = await reviseLoanApplication(application.piid, rejectNotes);
-
-            // Update local state after successful API call
-            updateApplicationStatus(application.id, 'Rejected', { rejectNotes });
-
-            // Show success modal
-            setSuccessTitle('Application Rejected');
-            setSuccessMessage(response.responseMessage || 'Application has been rejected successfully.');
-            setShowSuccessModal(true);
-            setShowRejectModal(false);
-            setRejectNotes('');
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An error occurred';
-            setSuccessTitle('Rejection Failed');
-            setSuccessMessage(errorMessage);
-            setShowSuccessModal(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRecalculateSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+        // Show success modal
+        setSuccessTitle("Process Submitted");
+        setSuccessMessage(
+          response.result || "Process has been submitted successfully."
+        );
+        setShowSuccessModal(true);
+        setLoading(false);
+      } else {
+        // For other statuses, just update local state (mock)
         setTimeout(() => {
-            updateApplicationStatus(application.id, application.status, {
-                loanAmount: recalculateForm.loanAmount,
-                tenor: recalculateForm.tenor
-            });
-            setLoading(false);
-            setShowRecalculateModal(false);
+          updateApplicationStatus(application.id, newStatus, data);
+          setLoading(false);
+          navigate("/");
         }, 1000);
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      alert(`Failed to process action: ${errorMessage} `);
+      setLoading(false);
+    }
+  };
+
+  const handleEddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (!application.piid) {
+        throw new Error("PIID not found for this application");
+      }
+
+      // Call revise API with notes
+      const response = await reviseLoanApplication(application.piid, eddNotes);
+
+      // Update local state after successful API call
+      updateApplicationStatus(application.id, "EDD Required", { eddNotes });
+
+      // Show success modal
+      setSuccessTitle("EDD Request Submitted");
+      setSuccessMessage(
+        response.responseMessage || "EDD request has been sent successfully."
+      );
+      setShowSuccessModal(true);
+      setShowEddModal(false);
+      setEddNotes("");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      setSuccessTitle("EDD Request Failed");
+      setSuccessMessage(errorMessage);
+      setShowSuccessModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproveSubmit = async () => {
+    setLoading(true);
+
+    try {
+      if (!application.piid) {
+        throw new Error("PIID not found for this application");
+      }
+
+      // Call submit API directly with piid only
+      const response = await submitLoanForApproval(application.piid);
+
+      // Determine next status based on current role
+      // Supervisor -> Analyst Review
+      // Analyst -> Approval
+      const nextStatus =
+        user.role === "Supervisor" ? "Analyst Review" : "Approval";
+
+      // Update local state after successful API call
+      updateApplicationStatus(application.id, nextStatus as any, {});
+
+      // Show success modal with role-appropriate message
+      setSuccessTitle("Submission Successful");
+      setSuccessMessage(
+        user.role === "Supervisor"
+          ? response.responseMessage ||
+          "Application submitted to Analyst successfully."
+          : response.responseMessage ||
+          "Application submitted for Approval successfully."
+      );
+      setShowSuccessModal(true);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      setSuccessTitle("Submission Failed");
+      setSuccessMessage(errorMessage);
+      setShowSuccessModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproverDisburse = async () => {
+    setLoading(true);
+
+    try {
+      if (!application.piid) {
+        throw new Error("PIID not found for this application");
+      }
+
+      // Call submit API with piid
+      const response = await submitLoanForApproval(application.piid);
+
+      // Update local state after successful API call
+      updateApplicationStatus(application.id, "Disbursement Ready", {});
+
+      // Show success modal
+      setSuccessTitle("Disbursement Approved");
+      setSuccessMessage(
+        response.responseMessage ||
+        "Application approved for disbursement successfully."
+      );
+      setShowSuccessModal(true);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      setSuccessTitle("Disbursement Failed");
+      setSuccessMessage(errorMessage);
+      setShowSuccessModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (!application.piid) {
+        throw new Error("PIID not found for this application");
+      }
+
+      // Call revise API with reject notes
+      const response = await reviseLoanApplication(
+        application.piid,
+        rejectNotes
+      );
+
+      // Update local state after successful API call
+      updateApplicationStatus(application.id, "Rejected", { rejectNotes });
+
+      // Show success modal
+      setSuccessTitle("Application Rejected");
+      setSuccessMessage(
+        response.responseMessage ||
+        "Application has been rejected successfully."
+      );
+      setShowSuccessModal(true);
+      setShowRejectModal(false);
+      setRejectNotes("");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An error occurred";
+      setSuccessTitle("Rejection Failed");
+      setSuccessMessage(errorMessage);
+      setShowSuccessModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRecalculateSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      updateApplicationStatus(application.id, application.status, {
+        loanAmount: recalculateForm.loanAmount,
+        tenor: recalculateForm.tenor,
+      });
+      setLoading(false);
+      setShowRecalculateModal(false);
+    }, 1000);
+  };
+
+  const handleResubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (!application.piid || !application.loanId) {
+        throw new Error(
+          "Application data is incomplete (missing piid or loanId)"
+        );
+      }
+
+      // Convert files to Base64
+      let ktpBase64 = "";
+      let ktpFilename = "";
+      if (ktpFile) {
+        ktpBase64 = await convertFileToBase64(ktpFile);
+        ktpFilename = ktpFile.name;
+      }
+
+      let npwpBase64 = "";
+      let npwpFilename = "";
+      if (npwpFile) {
+        npwpBase64 = await convertFileToBase64(npwpFile);
+        npwpFilename = npwpFile.name;
+      }
+
+      // Convert EDD document files to Base64
+      let eddDocument1Base64 = "";
+      let eddDocument1Filename = "";
+      if (eddDocument1File) {
+        eddDocument1Base64 = await convertFileToBase64(eddDocument1File);
+        eddDocument1Filename = eddDocument1File.name;
+      }
+
+      let eddDocument2Base64 = "";
+      let eddDocument2Filename = "";
+      if (eddDocument2File) {
+        eddDocument2Base64 = await convertFileToBase64(eddDocument2File);
+        eddDocument2Filename = eddDocument2File.name;
+      }
+
+      // Build EDD update payload
+      const payload = {
+        piid: application.piid,
+        loanApplication: {
+          loanId: application.loanId,
+          status: "PENDING",
+          loanInformation: {
+            loanId: application.loanId,
+            pksNumberCompany: editForm.pksNumber,
+            creditProduct: editForm.kreditProduct,
+            salesId: application.salesId || "",
+          },
+          customerInformation: {
+            fullName: editForm.customerName,
+            nik: editForm.nik,
+            debtorOccupation: editForm.debtorOccupation,
+            lengthOfEmployment: `${editForm.yearsOfService} years`,
+            salary: editForm.income,
+          },
+          emergencyContact: {
+            contactName: editForm.emergencyContact.name,
+            phoneNumber: editForm.emergencyContact.phone,
+            relationship: editForm.emergencyContact.relationship,
+          },
+          documents: {
+            ktpDocumentId: "",
+            ktpDocumentBase64: ktpBase64,
+            ktpDocumentFilename: ktpFilename,
+            npwpDocumentId: "",
+            npwpDocumentBase64: npwpBase64,
+            npwpDocumentFilename: npwpFilename,
+          },
+          eddDocuments: {
+            eddDocument1Base64: eddDocument1Base64,
+            eddDocument1Filename: eddDocument1Filename,
+            eddDocument1DocumentId: null,
+            eddDocument2Base64: eddDocument2Base64,
+            eddDocument2Filename: eddDocument2Filename,
+            eddDocument2DocumentId: null,
+          },
+          loanDetails: {
+            loanAmount: editForm.loanAmount,
+            tenor: editForm.tenor,
+          },
+          bankingInformation: {
+            bankName: editForm.bankingInfo.bankName,
+            accountNumber: editForm.bankingInfo.accountNumber,
+            hasPayrollAccount: editForm.bankingInfo.payrollAccount,
+            existingLoans: editForm.bankingInfo.existingLoans,
+          },
+          preferredDisbursementAccount: {
+            recipientName:
+              editForm.bankingInfo.disbursementAccount.recipientName,
+            bankName: editForm.bankingInfo.disbursementAccount.bankName,
+            accountNumber:
+              editForm.bankingInfo.disbursementAccount.accountNumber,
+          },
+          internalCheckingResult: {
+            dhnResult: "CLEAR",
+            amlResult: "LOW_RISK",
+            centralDedupResult: "",
+            pepFlag: false,
+          },
+        },
+      };
+
+
+      // Call updateEDDApplication API
+      const response = await updateEDDApplication(payload);
+
+      // Update local state after successful API call
+      updateApplicationStatus(application.id, "Submitted", {
+        customerName: editForm.customerName,
+        nik: editForm.nik,
+        loanAmount: editForm.loanAmount,
+        tenor: editForm.tenor,
+        nationalIdFile: editForm.nationalIdFile,
+        pksNumber: editForm.pksNumber,
+        pksCompanyName: pksCompanies.find(
+          (p) => p.pksNumber === editForm.pksNumber
+        )?.companyName,
+        kreditProduct: editForm.kreditProduct,
+        debtorOccupation: editForm.debtorOccupation,
+        income: editForm.income,
+        yearsOfService: editForm.yearsOfService,
+        npwpFile: editForm.npwpFile,
+        emergencyContact: editForm.emergencyContact,
+        bankingInfo: editForm.bankingInfo,
+        eddNotes: undefined, // Clear EDD notes on resubmit
+      });
+
+      // Show success modal
+      setSuccessTitle("EDD Resubmission Successful");
+      setSuccessMessage(
+        response.responseMessage ||
+        "Application has been resubmitted successfully."
+      );
+      setShowSuccessModal(true);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      setSuccessTitle("Resubmission Failed");
+      setSuccessMessage(errorMessage);
+      setShowSuccessModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisbursementSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      updateApplicationStatus(application.id, "Disbursed", {
+        disbursementDetails: {
+          ...disbursementForm,
+          amount: Number(disbursementForm.amount),
+        },
+      });
+      setLoading(false);
+      setShowDisbursementModal(false);
+      navigate("/");
+    }, 1000);
+  };
+
+  const handleChecklistChange = (key: string, checked: boolean) => {
+    const currentChecklist = application.approverChecklist || {
+      creditScoreChecked: false,
+      documentsVerified: false,
+      collateralValuation: false,
+      complianceCheck: false,
     };
 
-    const handleResubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
+    updateApplicationStatus(application.id, application.status, {
+      approverChecklist: {
+        ...currentChecklist,
+        [key]: checked,
+      },
+    });
+  };
 
-        try {
-            if (!application.piid || !application.loanId) {
-                throw new Error('Application data is incomplete (missing piid or loanId)');
-            }
-
-            // Convert files to Base64
-            let ktpBase64 = '';
-            let ktpFilename = '';
-            if (ktpFile) {
-                ktpBase64 = await convertFileToBase64(ktpFile);
-                ktpFilename = ktpFile.name;
-            }
-
-            let npwpBase64 = '';
-            let npwpFilename = '';
-            if (npwpFile) {
-                npwpBase64 = await convertFileToBase64(npwpFile);
-                npwpFilename = npwpFile.name;
-            }
-
-            // Build EDD update payload
-            const payload = {
-                piid: application.piid,
-                loanApplication: {
-                    loanId: application.loanId,
-                    status: 'PENDING',
-                    loanInformation: {
-                        loanId: application.loanId,
-                        pksNumberCompany: editForm.pksNumber,
-                        creditProduct: editForm.kreditProduct,
-                        salesId: application.salesId || ''
-                    },
-                    customerInformation: {
-                        fullName: editForm.customerName,
-                        nik: editForm.nik,
-                        debtorOccupation: editForm.debtorOccupation,
-                        lengthOfEmployment: `${editForm.yearsOfService} years`,
-                        salary: editForm.income
-                    },
-                    emergencyContact: {
-                        contactName: editForm.emergencyContact.name,
-                        phoneNumber: editForm.emergencyContact.phone,
-                        relationship: editForm.emergencyContact.relationship
-                    },
-                    documents: {
-                        ktpDocumentId: '',
-                        ktpDocumentBase64: ktpBase64,
-                        ktpDocumentFilename: ktpFilename,
-                        npwpDocumentId: '',
-                        npwpDocumentBase64: npwpBase64,
-                        npwpDocumentFilename: npwpFilename
-                    },
-                    loanDetails: {
-                        loanAmount: editForm.loanAmount,
-                        tenor: editForm.tenor
-                    },
-                    bankingInformation: {
-                        bankName: editForm.bankingInfo.bankName,
-                        accountNumber: editForm.bankingInfo.accountNumber,
-                        hasPayrollAccount: editForm.bankingInfo.payrollAccount,
-                        existingLoans: editForm.bankingInfo.existingLoans
-                    },
-                    preferredDisbursementAccount: {
-                        recipientName: editForm.bankingInfo.disbursementAccount.recipientName,
-                        bankName: editForm.bankingInfo.disbursementAccount.bankName,
-                        accountNumber: editForm.bankingInfo.disbursementAccount.accountNumber
-                    },
-                    internalCheckingResult: {
-                        dhnResult: 'CLEAR',
-                        amlResult: 'LOW_RISK',
-                        centralDedupResult: '',
-                        pepFlag: false
-                    }
-                }
-            };
-
-            // Call updateEDDApplication API
-            const response = await updateEDDApplication(payload);
-
-            // Update local state after successful API call
-            updateApplicationStatus(application.id, 'Submitted', {
-                customerName: editForm.customerName,
-                nik: editForm.nik,
-                loanAmount: editForm.loanAmount,
-                tenor: editForm.tenor,
-                nationalIdFile: editForm.nationalIdFile,
-                pksNumber: editForm.pksNumber,
-                pksCompanyName: pksCompanies.find(p => p.pksNumber === editForm.pksNumber)?.companyName,
-                kreditProduct: editForm.kreditProduct,
-                debtorOccupation: editForm.debtorOccupation,
-                income: editForm.income,
-                yearsOfService: editForm.yearsOfService,
-                npwpFile: editForm.npwpFile,
-                emergencyContact: editForm.emergencyContact,
-                bankingInfo: editForm.bankingInfo,
-                eddNotes: undefined // Clear EDD notes on resubmit
-            });
-
-            // Show success modal
-            setSuccessTitle('EDD Resubmission Successful');
-            setSuccessMessage(response.responseMessage || 'Application has been resubmitted successfully.');
-            setShowSuccessModal(true);
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-            setSuccessTitle('Resubmission Failed');
-            setSuccessMessage(errorMessage);
-            setShowSuccessModal(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDisbursementSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setTimeout(() => {
-            updateApplicationStatus(application.id, 'Disbursed', {
-                disbursementDetails: {
-                    ...disbursementForm,
-                    amount: Number(disbursementForm.amount)
-                }
-            });
-            setLoading(false);
-            setShowDisbursementModal(false);
-            navigate('/');
-        }, 1000);
-    };
-
-    const handleChecklistChange = (key: string, checked: boolean) => {
-        const currentChecklist = application.approverChecklist || {
-            creditScoreChecked: false,
-            documentsVerified: false,
-            collateralValuation: false,
-            complianceCheck: false
-        };
-
-        updateApplicationStatus(application.id, application.status, {
-            approverChecklist: {
-                ...currentChecklist,
-                [key]: checked
-            }
-        });
-    };
-
-    const renderActions = () => {
-        console.log('Debug renderActions:', { role: user.role, status: application.status });
-        switch (user.role) {
-            case 'Sales':
-                if (application.status === 'Submitted') {
-                    return (
-                        <button
-                            onClick={() => setShowDeleteConfirm(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                        >
-                            <XCircle size={18} /> Delete
-                        </button>
-                    );
-                }
-                if (application.status === 'EDD Required') {
-                    return (
-                        <div className="flex gap-3">
-                            {!isEditing ? (
-                                <button
-                                    onClick={startEditing}
-                                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    <FileText size={18} /> Edit Application
-                                </button>
-                            ) : (
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => setIsEditing(false)}
-                                        className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleResubmit}
-                                        disabled={loading}
-                                        className="flex items-center gap-2 px-4 py-2 bg-bni-orange text-white rounded-lg hover:bg-orange-600"
-                                    >
-                                        <CheckCircle size={18} /> Save & Resubmit
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    );
-                }
-                break;
-            case 'ICR':
-                if (application.status === 'Submitted') {
-                    return (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => handleAction('Internal Checking')}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                                <CheckCircle size={18} /> Start Internal Check
-                            </button>
-                        </div>
-                    );
-                }
-                if (application.status === 'Internal Checking') {
-                    return (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => handleAction('External Checking')}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                                <CheckCircle size={18} /> Proceed to External Check
-                            </button>
-                            <button
-                                onClick={() => handleAction('Rejected')}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                                <XCircle size={18} /> Reject
-                            </button>
-                        </div>
-                    );
-                }
-                if (application.status === 'External Checking') {
-                    return (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => handleAction('Supervisor Review')}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                                <CheckCircle size={18} /> Submit to Supervisor
-                            </button>
-                            <button
-                                onClick={() => handleAction('Rejected')}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                                <XCircle size={18} /> Reject
-                            </button>
-                        </div>
-                    );
-                }
-                break;
-            case 'Supervisor':
-                // Check if status contains 'Supervisor' to be more robust
-                if (application.status === 'Supervisor Review' || application.status.includes('Supervisor')) {
-                    return (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={handleApproveSubmit}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                            >
-                                <CheckCircle size={18} /> {loading ? 'Processing...' : 'Approve to Analyst'}
-                            </button>
-                            <button
-                                onClick={() => setShowEddModal(true)}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-                            >
-                                <AlertTriangle size={18} /> Request EDD
-                            </button>
-                            <button
-                                onClick={() => setShowRejectModal(true)}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                                <XCircle size={18} /> Reject
-                            </button>
-                        </div>
-                    );
-                }
-                break;
-            case 'Analyst':
-                if (application.status === 'Analyst Review') {
-                    return (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowRecalculateModal(true)}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                            >
-                                <FileText size={18} /> Recalculate
-                            </button>
-                            <button
-                                onClick={() => handleAction('Approval')}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                                <CheckCircle size={18} /> Submit for Approval
-                            </button>
-                            <button
-                                onClick={() => handleAction('Rejected')}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                                <XCircle size={18} /> Reject
-                            </button>
-                        </div>
-                    );
-                }
-                break;
-            case 'Approver':
-                if (application.status === 'Approval') {
-                    const allChecked = application.approverChecklist &&
-                        Object.values(application.approverChecklist).every(Boolean);
-
-                    return (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    // Dummy PDF download
-                                    const link = document.createElement('a');
-                                    link.href = 'data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNDQgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQxCiUlRU9GCg==';
-                                    link.download = 'SKK_Document.pdf';
-                                    link.click();
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                            >
-                                <FileText size={18} /> View SKK
-                            </button>
-                            <button
-                                onClick={() => {
-                                    // Dummy PDF download
-                                    const link = document.createElement('a');
-                                    link.href = 'data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNDQgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQxCiUlRU9GCg==';
-                                    link.download = 'PK_Document.pdf';
-                                    link.click();
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                            >
-                                <FileText size={18} /> View PK
-                            </button>
-                            <button
-                                onClick={() => handleAction('Disbursement Ready')}
-                                disabled={loading || !allChecked}
-                                title={!allChecked ? "Please complete the checklist first" : ""}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <CheckCircle size={18} /> Disburse
-                            </button>
-                            <button
-                                onClick={() => handleAction('Rejected')}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                                <XCircle size={18} /> Reject
-                            </button>
-                        </div>
-                    );
-                }
-                break;
-            case 'Operation':
-                if (application.status === 'Disbursement Ready') {
-                    return (
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowDisbursementModal(true)}
-                                disabled={loading}
-                                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
-                            >
-                                <CheckCircle size={18} /> Disburse Funds
-                            </button>
-                        </div>
-                    );
-                }
-                break;
-        }
-        return null;
-    };
-
-    return (
-        <div className="max-w-4xl mx-auto mb-20">
-            <SuccessModal
-                isOpen={showSuccessModal}
-                onClose={() => {
-                    setShowSuccessModal(false);
-                    navigate('/');
-                }}
-                title={successTitle}
-                message={successMessage}
-            />
+  const renderActions = () => {
+    console.log("Debug renderActions:", {
+      role: user.role,
+      status: application.status,
+      data: responseData,
+    });
+    switch (user.role) {
+      case "Sales":
+        if (application.status === "Submitted") {
+          return (
             <button
-                onClick={() => navigate('/')}
-                className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-6 transition-colors"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
-                <ArrowLeft size={20} /> Back to Dashboard
+              <XCircle size={18} /> Delete
             </button>
-
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-start">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <h1 className="text-2xl font-bold text-slate-900">{application.id}</h1>
-                            <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-medium">
-                                {application.status}
-                            </span>
-                        </div>
-                        <p className="text-slate-500">Created on {new Date(application.createdAt).toLocaleDateString()}</p>
-                        {application.salesId && (
-                            <p className="text-slate-500 mt-1">Sales ID: <span className="font-medium text-slate-900">{application.salesId}</span></p>
-                        )}
-                    </div>
-                    <div className="flex gap-2">
-                        {renderActions()}
-                    </div>
+          );
+        }
+        if (application.status === "EDD Required") {
+          return (
+            <div className="flex gap-3">
+              {!isEditing ? (
+                <button
+                  onClick={startEditing}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <FileText size={18} /> Edit Application
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleResubmit}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-4 py-2 bg-bni-orange text-white rounded-lg hover:bg-orange-600"
+                  >
+                    <CheckCircle size={18} /> Save & Resubmit
+                  </button>
                 </div>
-
-                {application.status === 'EDD Required' && application.eddNotes && (
-                    <div className="p-4 bg-orange-50 border-b border-orange-100">
-                        <div className="flex items-start gap-3">
-                            <AlertTriangle className="text-orange-600 mt-0.5" size={20} />
-                            <div>
-                                <h4 className="font-semibold text-orange-900">EDD Required</h4>
-                                <p className="text-orange-800 mt-1">{application.eddNotes}</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <div className="p-8 space-y-8">
-                    {/* Loan Information */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Loan Information</h3>
-                        <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <label className="text-sm text-slate-500">Loan ID</label>
-                                {isEditing ? (
-                                    <input
-                                        disabled
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded bg-slate-50 text-slate-500"
-                                        value={application.loanId || application.id}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.loanId || application.id}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">PKS Number & Company</label>
-                                {isEditing ? (
-                                    <select
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.pksNumber}
-                                        onChange={e => setEditForm({ ...editForm, pksNumber: e.target.value })}
-                                    >
-                                        <option value="">Select PKS Company</option>
-                                        {pksCompanies.map((company) => (
-                                            <option key={company.id} value={company.pksNumber}>
-                                                {company.pksNumber} - {company.companyName}
-                                            </option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <p className="font-medium text-slate-900">
-                                        {application.pksNumber ? `${application.pksNumber} - ${application.pksCompanyName} ` : '-'}
-                                    </p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Kredit Product</label>
-                                {isEditing ? (
-                                    <select
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.kreditProduct}
-                                        onChange={e => setEditForm({ ...editForm, kreditProduct: e.target.value })}
-                                    >
-                                        <option value="">Select Product</option>
-                                        {options.productOptions.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.kreditProduct || '-'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Sales ID</label>
-                                <p className="font-medium text-slate-900">{application.salesId || '-'}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Customer Information */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Customer Information</h3>
-                        <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <label className="text-sm text-slate-500">Full Name</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.customerName}
-                                        onChange={e => setEditForm({ ...editForm, customerName: e.target.value })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.customerName}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">NIK</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.nik}
-                                        onChange={e => setEditForm({ ...editForm, nik: e.target.value })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.nik || application.customerId}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Debtor Occupation</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.debtorOccupation}
-                                        onChange={e => setEditForm({ ...editForm, debtorOccupation: e.target.value })}
-                                        placeholder="e.g. Business Owner, Manager, etc."
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.debtorOccupation || '-'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Monthly Income</label>
-                                {isEditing ? (
-                                    <MoneyInput
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.income || 0}
-                                        onChange={val => setEditForm({ ...editForm, income: val })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">
-                                        {application.income ? `Rp ${application.income.toLocaleString('id-ID')} ` : '-'}
-                                    </p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Years of Service</label>
-                                {isEditing ? (
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.yearsOfService || 0}
-                                        onChange={e => setEditForm({ ...editForm, yearsOfService: Number(e.target.value) })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">
-                                        {application.yearsOfService ? `${application.yearsOfService} Years` : '-'}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Emergency Contact */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Emergency Contact</h3>
-                        <div className="grid grid-cols-3 gap-6">
-                            <div>
-                                <label className="text-sm text-slate-500">Contact Name</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.emergencyContact?.name}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            emergencyContact: { ...editForm.emergencyContact, name: e.target.value }
-                                        })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.emergencyContact?.name || '-'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Phone Number</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.emergencyContact?.phone}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            emergencyContact: { ...editForm.emergencyContact, phone: e.target.value }
-                                        })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.emergencyContact?.phone || '-'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Relationship</label>
-                                {isEditing ? (
-                                    <select
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.emergencyContact?.relationship}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            emergencyContact: { ...editForm.emergencyContact, relationship: e.target.value }
-                                        })}
-                                    >
-                                        <option value="">Select Relationship</option>
-                                        {options.relationshipOptions.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.emergencyContact?.relationship || '-'}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Documents */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Documents</h3>
-                        <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <label className="text-sm text-slate-500">National ID (KTP)</label>
-                                {isEditing ? (
-                                    <div className="mt-1">
-                                        <input
-                                            type="file"
-                                            accept=".pdf,.jpg,.jpeg,.png"
-                                            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    setKtpFile(file); // Store File object for base64 conversion
-                                                    setEditForm({ ...editForm, nationalIdFile: URL.createObjectURL(file) });
-                                                }
-                                            }}
-                                        />
-                                        {editForm.nationalIdFile && <p className="text-xs text-green-600 mt-1">New file selected</p>}
-                                    </div>
-                                ) : (
-                                    application.nationalIdFile ? (
-                                        <a
-                                            href={application.nationalIdFile}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
-                                        >
-                                            <FileText size={16} /> View Document
-                                        </a>
-                                    ) : <p className="text-slate-400 italic">No document uploaded</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">NPWP</label>
-                                {isEditing ? (
-                                    <div className="mt-1">
-                                        <input
-                                            type="file"
-                                            accept=".pdf,.jpg,.jpeg,.png"
-                                            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) {
-                                                    setNpwpFile(file); // Store File object for base64 conversion
-                                                    setEditForm({ ...editForm, npwpFile: URL.createObjectURL(file) });
-                                                }
-                                            }}
-                                        />
-                                        {editForm.npwpFile && <p className="text-xs text-green-600 mt-1">New file selected</p>}
-                                    </div>
-                                ) : (
-                                    application.npwpFile ? (
-                                        <a
-                                            href={application.npwpFile}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
-                                        >
-                                            <FileText size={16} /> View Document
-                                        </a>
-                                    ) : <p className="text-slate-400 italic">No document uploaded</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Loan Details */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Loan Details</h3>
-                        <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <label className="text-sm text-slate-500">Loan Amount</label>
-                                {isEditing ? (
-                                    <MoneyInput
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.loanAmount}
-                                        onChange={val => setEditForm({ ...editForm, loanAmount: val })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">Rp {application.loanAmount.toLocaleString('id-ID')}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Tenor</label>
-                                {isEditing ? (
-                                    <select
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.tenor}
-                                        onChange={e => setEditForm({ ...editForm, tenor: Number(e.target.value) })}
-                                    >
-                                        {options.tenorOptions.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.tenor} Months</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Banking Information */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Banking Information</h3>
-                        <div className="grid grid-cols-2 gap-6">
-                            <div>
-                                <label className="text-sm text-slate-500">Bank Name</label>
-                                {isEditing ? (
-                                    <select
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.bankingInfo?.bankName}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            bankingInfo: { ...editForm.bankingInfo, bankName: e.target.value }
-                                        })}
-                                    >
-                                        <option value="">Select Bank</option>
-                                        {options.bankOptions.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.bankingInfo?.bankName || '-'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Account Number</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.bankingInfo?.accountNumber}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            bankingInfo: { ...editForm.bankingInfo, accountNumber: e.target.value }
-                                        })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.bankingInfo?.accountNumber || '-'}</p>
-                                )}
-                            </div>
-                            <div className="col-span-2">
-                                <label className="text-sm text-slate-500">Payroll Account</label>
-                                {isEditing ? (
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <input
-                                            type="checkbox"
-                                            checked={editForm.bankingInfo?.payrollAccount}
-                                            onChange={e => setEditForm({
-                                                ...editForm,
-                                                bankingInfo: { ...editForm.bankingInfo, payrollAccount: e.target.checked }
-                                            })}
-                                            className="w-4 h-4 text-bni-teal border-slate-300 rounded focus:ring-bni-teal"
-                                        />
-                                        <span className="text-sm font-medium text-slate-700">Has Payroll Account</span>
-                                    </div>
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.bankingInfo?.payrollAccount ? 'Yes' : 'No'}</p>
-                                )}
-                            </div>
-                            {(isEditing ? editForm.bankingInfo?.payrollAccount : application.bankingInfo?.payrollAccount) && (
-                                <div className="col-span-2">
-                                    <label className="text-sm text-slate-500">Payroll Account Number</label>
-                                    {isEditing ? (
-                                        <input
-                                            type="text"
-                                            className="w-full px-3 py-2 border border-slate-200 rounded"
-                                            value={editForm.bankingInfo?.payrollAccountNumber}
-                                            onChange={e => setEditForm({
-                                                ...editForm,
-                                                bankingInfo: { ...editForm.bankingInfo, payrollAccountNumber: e.target.value }
-                                            })}
-                                        />
-                                    ) : (
-                                        <p className="font-medium text-slate-900">{application.bankingInfo?.payrollAccountNumber || '-'}</p>
-                                    )}
-                                </div>
-                            )}
-                            <div className="col-span-2">
-                                <label className="text-sm text-slate-500">Existing Loans</label>
-                                {isEditing ? (
-                                    <textarea
-                                        rows={2}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.bankingInfo?.existingLoans}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            bankingInfo: { ...editForm.bankingInfo, existingLoans: e.target.value }
-                                        })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.bankingInfo?.existingLoans || '-'}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Preferred Disbursement Account */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">Preferred Disbursement Account</h3>
-                        <div className="grid grid-cols-3 gap-6">
-                            <div>
-                                <label className="text-sm text-slate-500">Recipient Name</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.bankingInfo?.disbursementAccount?.recipientName}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            bankingInfo: {
-                                                ...editForm.bankingInfo,
-                                                disbursementAccount: { ...editForm.bankingInfo.disbursementAccount, recipientName: e.target.value }
-                                            }
-                                        })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.bankingInfo?.disbursementAccount?.recipientName || '-'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Bank Name</label>
-                                {isEditing ? (
-                                    <select
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.bankingInfo?.disbursementAccount?.bankName}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            bankingInfo: {
-                                                ...editForm.bankingInfo,
-                                                disbursementAccount: { ...editForm.bankingInfo.disbursementAccount, bankName: e.target.value }
-                                            }
-                                        })}
-                                    >
-                                        <option value="">Select Bank</option>
-                                        {options.bankOptions.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.bankingInfo?.disbursementAccount?.bankName || '-'}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-sm text-slate-500">Account Number</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded"
-                                        value={editForm.bankingInfo?.disbursementAccount?.accountNumber}
-                                        onChange={e => setEditForm({
-                                            ...editForm,
-                                            bankingInfo: {
-                                                ...editForm.bankingInfo,
-                                                disbursementAccount: { ...editForm.bankingInfo.disbursementAccount, accountNumber: e.target.value }
-                                            }
-                                        })}
-                                    />
-                                ) : (
-                                    <p className="font-medium text-slate-900">{application.bankingInfo?.disbursementAccount?.accountNumber || '-'}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+              )}
             </div>
+          );
+        }
+        break;
+      case "ICR":
+        if (application.status === "Submitted") {
+          return (
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleAction("Internal Checking")}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <CheckCircle size={18} /> Start Internal Check
+              </button>
+            </div>
+          );
+        }
+        if (application.status === "Internal Checking") {
+          return (
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleAction("External Checking")}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <CheckCircle size={18} /> Proceed to External Check
+              </button>
+              <button
+                onClick={() => handleAction("Rejected")}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <XCircle size={18} /> Reject
+              </button>
+            </div>
+          );
+        }
+        if (application.status === "External Checking") {
+          return (
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleAction("Supervisor Review")}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <CheckCircle size={18} /> Submit to Supervisor
+              </button>
+              <button
+                onClick={() => handleAction("Rejected")}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <XCircle size={18} /> Reject
+              </button>
+            </div>
+          );
+        }
+        break;
+      case "Supervisor":
+        // Check if status contains 'Supervisor' to be more robust
+        if (
+          application.status === "Supervisor Review" ||
+          application.status.includes("Supervisor")
+        ) {
+          return (
+            <div className="flex gap-3">
+              <button
+                onClick={handleApproveSubmit}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                <CheckCircle size={18} />{" "}
+                {loading ? "Processing..." : "Approve to Analyst"}
+              </button>
+              <button
+                onClick={() => setShowEddModal(true)}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+              >
+                <AlertTriangle size={18} /> Request EDD
+              </button>
+              <button
+                onClick={() => handleAction("Rejected")}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <XCircle size={18} /> Reject
+              </button>
+            </div>
+          );
+        }
+        break;
+      case "Analyst":
+        if (application.status === "Analyst Review") {
+          return (
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowRecalculateModal(true)}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                <FileText size={18} /> Recalculate
+              </button>
+              <button
+                onClick={handleApproveSubmit}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                <CheckCircle size={18} />{" "}
+                {loading ? "Processing..." : "Submit for Approval"}
+              </button>
+              <button
+                onClick={() => handleAction("Rejected")}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <XCircle size={18} /> Reject
+              </button>
+            </div>
+          );
+        }
+        break;
+      case "Approver":
+        if (application.status === "Approval") {
+          const allChecked =
+            application.approverChecklist &&
+            Object.values(application.approverChecklist).every(Boolean);
 
-            {/* Additional Information - Role Based */}
-            {user.role !== 'Sales' && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-                    <div className="p-6 border-b border-slate-100">
-                        <h3 className="text-lg font-semibold text-slate-900">Additional Information</h3>
-                    </div>
+          return (
+            <div className="flex gap-3">
+              <button
+                onClick={() =>
+                  openBase64File(
+                    responseData.loanApplication.documents.skkBase64,
+                    "SKK_Document.pdf"
+                  )
+                }
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                View SKK
+              </button>
+              <button
+                // onClick={() => {
+                //     // Dummy PDF download
+                //     const link = document.createElement('a');
+                //     link.href = 'data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNDQgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQxCiUlRU9GCg==';
+                //     link.download = 'PK_Document.pdf';
+                //     link.click();
+                // }}
+                onClick={() =>
+                  openBase64File(
+                    responseData.loanApplication.documents.pkBase64,
+                    "SKK_Document.pdf"
+                  )
+                }
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+              >
+                <FileText size={18} /> View PK
+              </button>
+              <button
+                onClick={handleApproverDisburse}
+                disabled={loading || !allChecked}
+                title={!allChecked ? "Please complete the checklist first" : ""}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <CheckCircle size={18} />{" "}
+                {loading ? "Processing..." : "Disburse"}
+              </button>
+              <button
+                onClick={() => handleAction("Rejected")}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                <XCircle size={18} /> Reject
+              </button>
+            </div>
+          );
+        }
+        break;
+      case "Operation":
+        if (application.status === "Disbursement Ready") {
+          return (
+            <div className="flex gap-3">
+              <button
+                onClick={handleDisburse}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+              >
+                <CheckCircle size={18} /> Disburse Funds
+              </button>
+            </div>
+          );
+        }
+        break;
+    }
+    return null;
+  };
 
-                    {/* ICR Role: Internal and External Checking Tables */}
-                    {user.role === 'ICR' && (
-                        <div className="p-6 space-y-6">
-                            {/* Internal Checking Table - Only show when status is Internal Checking or later */}
-                            {(application.status === 'Internal Checking' ||
-                                application.status === 'External Checking' ||
-                                application.status === 'Supervisor Review' ||
-                                application.status === 'Analyst Review' ||
-                                application.status === 'Approval' ||
-                                application.status === 'Approved' ||
-                                application.status === 'Disbursement Ready' ||
-                                application.status === 'Disbursed') && (
-                                    <div>
-                                        <h4 className="text-md font-semibold text-slate-800 mb-3">Internal Checking</h4>
-                                        <table className="w-full text-sm text-left text-slate-600">
-                                            <thead className="text-xs text-slate-700 uppercase bg-slate-50">
-                                                <tr>
-                                                    <th className="px-6 py-3">Check Type</th>
-                                                    <th className="px-6 py-3">Result</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr className="bg-white border-b">
-                                                    <td className="px-6 py-4 font-medium text-slate-900">DHN Result</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult?.dhnResult === 'CLEAR'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-slate-100 text-slate-800'
-                                                            }`}>
-                                                            {icrCheckingData.internalCheckingResult?.dhnResult || 'N/A'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                                <tr className="bg-white border-b">
-                                                    <td className="px-6 py-4 font-medium text-slate-900">AML Result</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult?.amlResult === 'LOW_RISK'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-slate-100 text-slate-800'
-                                                            }`}>
-                                                            {icrCheckingData.internalCheckingResult?.amlResult || 'N/A'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                                <tr className="bg-white">
-                                                    <td className="px-6 py-4 font-medium text-slate-900">Central Dedup Result</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult?.centralDedupResult === 'NO_DUPLICATION'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-slate-100 text-slate-800'
-                                                            }`}>
-                                                            {icrCheckingData.internalCheckingResult?.centralDedupResult || 'N/A'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
+  function openBase64File(base64: string, filename: string): void {
+    // Tentukan mime type berdasarkan ekstensi
+    const extension = filename.split(".").pop()?.toLowerCase();
+    let mimeType = "application/octet-stream";
 
-                            {/* External Checking Table - Only show when status is External Checking or later */}
-                            {(application.status === 'External Checking' ||
-                                application.status === 'Supervisor Review' ||
-                                application.status === 'Analyst Review' ||
-                                application.status === 'Approval' ||
-                                application.status === 'Approved' ||
-                                application.status === 'Disbursement Ready' ||
-                                application.status === 'Disbursed') && (
-                                    <div>
-                                        <h4 className="text-md font-semibold text-slate-800 mb-3">External Checking</h4>
-                                        <table className="w-full text-sm text-left text-slate-600">
-                                            <thead className="text-xs text-slate-700 uppercase bg-slate-50">
-                                                <tr>
-                                                    <th className="px-6 py-3">Check Type</th>
-                                                    <th className="px-6 py-3">Result</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr className="bg-white border-b">
-                                                    <td className="px-6 py-4 font-medium text-slate-900">NPWP Checking</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult?.npwpChecking === 'PASS'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-slate-100 text-slate-800'
-                                                            }`}>
-                                                            {icrCheckingData.externalCheckingResult?.npwpChecking || 'N/A'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                                <tr className="bg-white border-b">
-                                                    <td className="px-6 py-4 font-medium text-slate-900">Dukcapil Checking</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult?.dukcapilChecking === 'PASS'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-slate-100 text-slate-800'
-                                                            }`}>
-                                                            {icrCheckingData.externalCheckingResult?.dukcapilChecking || 'N/A'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                                <tr className="bg-white">
-                                                    <td className="px-6 py-4 font-medium text-slate-900">SLIK Checking</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult?.slikChecking === 'PASS'
-                                                            ? 'bg-green-100 text-green-800'
-                                                            : 'bg-slate-100 text-slate-800'
-                                                            }`}>
-                                                            {icrCheckingData.externalCheckingResult?.slikChecking || 'N/A'}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                        </div>
-                    )}
-                </div>
+    if (extension === "pdf") mimeType = "application/pdf";
+    if (extension === "jpg" || extension === "jpeg") mimeType = "image/jpeg";
+    if (extension === "png") mimeType = "image/png";
+
+    // Buat data URL
+    const fileURL = `data:${mimeType};base64,${base64}`;
+
+    // Buka tab baru
+    const newTab = window.open();
+    if (newTab) {
+      newTab.document.write(
+        `<iframe src="${fileURL}" width="100%" height="100%" style="border:none;"></iframe>`
+      );
+    } else {
+      alert("Pop-up blocked! Harap izinkan pop-up untuk membuka dokumen.");
+    }
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto mb-20">
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          navigate("/");
+        }}
+        title={successTitle}
+        message={successMessage}
+      />
+      <button
+        onClick={() => navigate("/")}
+        className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-6 transition-colors"
+      >
+        <ArrowLeft size={20} /> Back to Dashboard
+      </button>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl font-bold text-slate-900">
+                {application.id}
+              </h1>
+              <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-medium">
+                {application.status}
+              </span>
+            </div>
+            <p className="text-slate-500">
+              Created on {new Date(application.createdAt).toLocaleDateString()}
+            </p>
+            {application.salesId && (
+              <p className="text-slate-500 mt-1">
+                Sales ID:{" "}
+                <span className="font-medium text-slate-900">
+                  {application.salesId}
+                </span>
+              </p>
             )}
-
-            {/* Approver Checklist */}
-            {(user.role === 'Approver' || application.status === 'Approval' || application.status === 'Disbursement Ready' || application.status === 'Disbursed') && (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-                    <div className="p-6 border-b border-slate-100">
-                        <h3 className="text-lg font-semibold text-slate-900">Approver Checklist</h3>
-                    </div>
-                    <div className="p-6">
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
-                                    checked={application.approverChecklist?.creditScoreChecked || false}
-                                    onChange={(e) => handleChecklistChange('creditScoreChecked', e.target.checked)}
-                                    disabled={user.role !== 'Approver' || application.status !== 'Approval'}
-                                />
-                                <span className="text-slate-700">Credit Score Verified</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
-                                    checked={application.approverChecklist?.documentsVerified || false}
-                                    onChange={(e) => handleChecklistChange('documentsVerified', e.target.checked)}
-                                    disabled={user.role !== 'Approver' || application.status !== 'Approval'}
-                                />
-                                <span className="text-slate-700">Documents Validated</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
-                                    checked={application.approverChecklist?.collateralValuation || false}
-                                    onChange={(e) => handleChecklistChange('collateralValuation', e.target.checked)}
-                                    disabled={user.role !== 'Approver' || application.status !== 'Approval'}
-                                />
-                                <span className="text-slate-700">Collateral Valuation Confirmed</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
-                                    checked={application.approverChecklist?.complianceCheck || false}
-                                    onChange={(e) => handleChecklistChange('complianceCheck', e.target.checked)}
-                                    disabled={user.role !== 'Approver' || application.status !== 'Approval'}
-                                />
-                                <span className="text-slate-700">Compliance Check Passed</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {
-                showDeleteConfirm && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                            <h2 className="text-xl font-bold text-slate-900 mb-4">Confirm Deletion</h2>
-                            <p className="text-slate-600 mb-6">
-                                Are you sure you want to delete application {application.id}? This action cannot be undone.
-                            </p>
-                            <div className="flex justify-end gap-3">
-                                <button
-                                    onClick={() => setShowDeleteConfirm(false)}
-                                    className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        deleteApplication(application.id);
-                                        navigate('/');
-                                    }}
-                                    className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {
-                showDisbursementModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                            <h2 className="text-xl font-bold text-slate-900 mb-4">Disbursement Details</h2>
-                            <form onSubmit={handleDisbursementSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                                        value={disbursementForm.bankName}
-                                        onChange={e => setDisbursementForm({ ...disbursementForm, bankName: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                                        value={disbursementForm.accountNumber}
-                                        onChange={e => setDisbursementForm({ ...disbursementForm, accountNumber: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Amount (IDR)</label>
-                                    <MoneyInput
-                                        required
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                                        value={disbursementForm.amount}
-                                        onChange={(value) => setDisbursementForm({ ...disbursementForm, amount: value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-                                    <input
-                                        required
-                                        type="date"
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                                        value={disbursementForm.date}
-                                        onChange={e => setDisbursementForm({ ...disbursementForm, date: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
-                                    <textarea
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                                        rows={3}
-                                        value={disbursementForm.notes}
-                                        onChange={e => setDisbursementForm({ ...disbursementForm, notes: e.target.value })}
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-3 mt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowDisbursementModal(false)}
-                                        className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
-                                    >
-                                        {loading ? 'Processing...' : 'Confirm Disbursement'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
-
-            {
-                showEddModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                            <h2 className="text-xl font-bold text-slate-900 mb-4">Request EDD</h2>
-                            <form onSubmit={handleEddSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Notes for Sales</label>
-                                    <textarea
-                                        required
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                                        rows={4}
-                                        placeholder="Explain what documents or information are missing..."
-                                        value={eddNotes}
-                                        onChange={e => setEddNotes(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-3 mt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowEddModal(false)}
-                                        className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-                                    >
-                                        Submit Request
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
-
-
-            {/* Reject Modal */}
-            {
-                showRejectModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                            <h2 className="text-xl font-bold text-slate-900 mb-4">Reject Application</h2>
-                            <form onSubmit={handleRejectSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Rejection Reason</label>
-                                    <textarea
-                                        required
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg"
-                                        rows={4}
-                                        placeholder="Enter reason for rejection..."
-                                        value={rejectNotes}
-                                        onChange={e => setRejectNotes(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-3 mt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowRejectModal(false)}
-                                        className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-                                    >
-                                        {loading ? 'Submitting...' : 'Reject'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Recalculate Modal */}
-            {
-                showRecalculateModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                            <h2 className="text-xl font-bold text-slate-900 mb-4">Recalculate Loan</h2>
-                            <form onSubmit={handleRecalculateSubmit} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">New Loan Amount</label>
-                                    <MoneyInput
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                                        value={recalculateForm.loanAmount}
-                                        onChange={val => setRecalculateForm({ ...recalculateForm, loanAmount: val })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">New Tenor</label>
-                                    <select
-                                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
-                                        value={recalculateForm.tenor}
-                                        onChange={e => setRecalculateForm({ ...recalculateForm, tenor: Number(e.target.value) })}
-                                    >
-                                        {options.tenorOptions.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="flex justify-end gap-3 mt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowRecalculateModal(false)}
-                                        className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="px-4 py-2 bg-bni-teal text-white rounded-lg font-medium hover:bg-teal-700"
-                                    >
-                                        {loading ? 'Updating...' : 'Update Loan'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
+          </div>
+          <div className="flex gap-2">{renderActions()}</div>
         </div>
-    );
+
+        {application.status === "EDD Required" && application.eddNotes && (
+          <div className="p-4 bg-orange-50 border-b border-orange-100">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="text-orange-600 mt-0.5" size={20} />
+              <div>
+                <h4 className="font-semibold text-orange-900">EDD Required</h4>
+                <p className="text-orange-800 mt-1">{application.eddNotes}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="p-8 space-y-8">
+          {/* Loan Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">
+              Loan Information
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm text-slate-500">Loan ID</label>
+                {isEditing ? (
+                  <input
+                    disabled
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded bg-slate-50 text-slate-500"
+                    value={application.loanId || application.id}
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.loanId || application.id}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">
+                  PKS Number & Company
+                </label>
+                {isEditing ? (
+                  <select
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.pksNumber}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, pksNumber: e.target.value })
+                    }
+                  >
+                    <option value="">Select PKS Company</option>
+                    {pksCompanies.map((company) => (
+                      <option key={company.id} value={`${company.pksNumber} - ${company.companyName}`}>
+                        {company.pksNumber} - {company.companyName}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.pksNumber
+                      ? `${application.pksNumber}`
+                      : "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Kredit Product</label>
+                {isEditing ? (
+                  <select
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.kreditProduct}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        kreditProduct: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">Select Product</option>
+                    {options.productOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.kreditProduct || "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Sales ID</label>
+                <p className="font-medium text-slate-900">
+                  {application.salesId || "-"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">
+              Customer Information
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm text-slate-500">Full Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.customerName}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, customerName: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.customerName}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">NIK</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.nik}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, nik: e.target.value })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.nik || application.customerId}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">
+                  Debtor Occupation
+                </label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.debtorOccupation}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        debtorOccupation: e.target.value,
+                      })
+                    }
+                    placeholder="e.g. Business Owner, Manager, etc."
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.debtorOccupation || "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Monthly Income</label>
+                {isEditing ? (
+                  <MoneyInput
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.income || 0}
+                    onChange={(val) =>
+                      setEditForm({ ...editForm, income: val })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.income
+                      ? `Rp ${application.income.toLocaleString("id-ID")} `
+                      : "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">
+                  Years of Service
+                </label>
+                {isEditing ? (
+                  <input
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.yearsOfService || 0}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        yearsOfService: Number(e.target.value),
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.yearsOfService
+                      ? `${application.yearsOfService} Years`
+                      : "-"}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Emergency Contact */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">
+              Emergency Contact
+            </h3>
+            <div className="grid grid-cols-3 gap-6">
+              <div>
+                <label className="text-sm text-slate-500">Contact Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.emergencyContact?.name}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        emergencyContact: {
+                          ...editForm.emergencyContact,
+                          name: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.emergencyContact?.name || "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Phone Number</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.emergencyContact?.phone}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        emergencyContact: {
+                          ...editForm.emergencyContact,
+                          phone: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.emergencyContact?.phone || "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Relationship</label>
+                {isEditing ? (
+                  <select
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.emergencyContact?.relationship}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        emergencyContact: {
+                          ...editForm.emergencyContact,
+                          relationship: e.target.value,
+                        },
+                      })
+                    }
+                  >
+                    <option value="">Select Relationship</option>
+                    {options.relationshipOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.emergencyContact?.relationship || "-"}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Documents */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">
+              Documents
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm text-slate-500">
+                  National ID (KTP)
+                </label>
+                {isEditing ? (
+                  <div className="mt-1">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setKtpFile(file); // Store File object for base64 conversion
+                          setEditForm({
+                            ...editForm,
+                            nationalIdFile: URL.createObjectURL(file),
+                          });
+                        }
+                      }}
+                    />
+                    {editForm.nationalIdFile && (
+                      <p className="text-xs text-green-600 mt-1">
+                        New file selected
+                      </p>
+                    )}
+                  </div>
+                ) : responseData?.loanApplication?.documents
+                  ?.ktpDocumentFilename ? (
+                  <button
+                    onClick={() =>
+                      openBase64File(
+                        responseData.loanApplication.documents
+                          .ktpDocumentBase64,
+                        responseData.loanApplication.documents
+                          .ktpDocumentFilename
+                      )
+                    }
+                    className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                  >
+                    <FileText size={16} />{" "}
+                    {responseData.loanApplication.documents.ktpDocumentFilename}
+                  </button>
+                ) : (
+                  <p className="text-slate-400 italic">No document uploaded</p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">NPWP</label>
+                {isEditing ? (
+                  <div className="mt-1">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setNpwpFile(file); // Store File object for base64 conversion
+                          setEditForm({
+                            ...editForm,
+                            npwpFile: URL.createObjectURL(file),
+                          });
+                        }
+                      }}
+                    />
+                    {editForm.npwpFile && (
+                      <p className="text-xs text-green-600 mt-1">
+                        New file selected
+                      </p>
+                    )}
+                  </div>
+                ) : responseData?.loanApplication?.documents
+                  ?.npwpDocumentFilename ? (
+                  <button
+                    onClick={() =>
+                      openBase64File(
+                        responseData.loanApplication.documents
+                          .npwpDocumentBase64,
+                        responseData.loanApplication.documents
+                          .npwpDocumentFilename
+                      )
+                    }
+                    className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                  >
+                    <FileText size={16} />{" "}
+                    {
+                      responseData.loanApplication.documents
+                        .npwpDocumentFilename
+                    }
+                  </button>
+                ) : (
+                  <p className="text-slate-400 italic">No document uploaded</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Documents */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">
+              EDD Document
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm text-slate-500">Edd Document 1</label>
+                {isEditing ? (
+                  <div className="mt-1">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setEddDocument1File(file); // Store File object for base64 conversion
+                        }
+                      }}
+                    />
+                    {eddDocument1File && (
+                      <p className="text-xs text-green-600 mt-1">
+                        New file selected: {eddDocument1File.name}
+                      </p>
+                    )}
+                  </div>
+                ) : responseData?.loanApplication?.eddDocuments
+                  ?.eddDocument1Filename ? (
+                  <button
+                    onClick={() =>
+                      openBase64File(
+                        responseData.loanApplication.eddDocuments
+                          .eddDocument1Base64,
+                        responseData.loanApplication.eddDocuments
+                          .eddDocument1Filename
+                      )
+                    }
+                    className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                  >
+                    <FileText size={16} />{" "}
+                    {
+                      responseData.loanApplication.eddDocuments
+                        .eddDocument1Filename
+                    }
+                  </button>
+                ) : (
+                  <p className="text-slate-400 italic">No document uploaded</p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">EDD Document 2</label>
+                {isEditing ? (
+                  <div className="mt-1">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-bni-teal/10 file:text-bni-teal hover:file:bg-bni-teal/20"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setEddDocument2File(file); // Store File object for base64 conversion
+                        }
+                      }}
+                    />
+                    {eddDocument2File && (
+                      <p className="text-xs text-green-600 mt-1">
+                        New file selected: {eddDocument2File.name}
+                      </p>
+                    )}
+                  </div>
+                ) : responseData?.loanApplication?.eddDocuments
+                  ?.eddDocument1Filename ? (
+                  <button
+                    onClick={() =>
+                      openBase64File(
+                        responseData.loanApplication.eddDocuments
+                          .eddDocument2Base64,
+                        responseData.loanApplication.eddDocuments
+                          .eddDocument2Filename
+                      )
+                    }
+                    className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                  >
+                    <FileText size={16} />{" "}
+                    {
+                      responseData.loanApplication.eddDocuments
+                        .eddDocument2Filename
+                    }
+                  </button>
+                ) : (
+                  <p className="text-slate-400 italic">No document uploaded</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Loan Details */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">
+              Loan Details
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm text-slate-500">Loan Amount</label>
+                {isEditing ? (
+                  <MoneyInput
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.loanAmount}
+                    onChange={(val) =>
+                      setEditForm({ ...editForm, loanAmount: val })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    Rp {application.loanAmount.toLocaleString("id-ID")}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Tenor</label>
+                {isEditing ? (
+                  <select
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.tenor}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        tenor: Number(e.target.value),
+                      })
+                    }
+                  >
+                    {options.tenorOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.tenor} Months
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Banking Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">
+              Banking Information
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm text-slate-500">Bank Name</label>
+                {isEditing ? (
+                  <select
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.bankingInfo?.bankName}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        bankingInfo: {
+                          ...editForm.bankingInfo,
+                          bankName: e.target.value,
+                        },
+                      })
+                    }
+                  >
+                    <option value="">Select Bank</option>
+                    {options.bankOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.bankingInfo?.bankName || "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Account Number</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.bankingInfo?.accountNumber}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        bankingInfo: {
+                          ...editForm.bankingInfo,
+                          accountNumber: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.bankingInfo?.accountNumber || "-"}
+                  </p>
+                )}
+              </div>
+              <div className="col-span-2">
+                <label className="text-sm text-slate-500">
+                  Payroll Account
+                </label>
+                {isEditing ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={editForm.bankingInfo?.payrollAccount}
+                      onChange={(e) =>
+                        setEditForm({
+                          ...editForm,
+                          bankingInfo: {
+                            ...editForm.bankingInfo,
+                            payrollAccount: e.target.checked,
+                          },
+                        })
+                      }
+                      className="w-4 h-4 text-bni-teal border-slate-300 rounded focus:ring-bni-teal"
+                    />
+                    <span className="text-sm font-medium text-slate-700">
+                      Has Payroll Account
+                    </span>
+                  </div>
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.bankingInfo?.payrollAccount ? "Yes" : "No"}
+                  </p>
+                )}
+              </div>
+              {(isEditing
+                ? editForm.bankingInfo?.payrollAccount
+                : application.bankingInfo?.payrollAccount) && (
+                  <div className="col-span-2">
+                    <label className="text-sm text-slate-500">
+                      Payroll Account Number
+                    </label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-slate-200 rounded"
+                        value={editForm.bankingInfo?.payrollAccountNumber}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            bankingInfo: {
+                              ...editForm.bankingInfo,
+                              payrollAccountNumber: e.target.value,
+                            },
+                          })
+                        }
+                      />
+                    ) : (
+                      <p className="font-medium text-slate-900">
+                        {application.bankingInfo?.payrollAccountNumber || "-"}
+                      </p>
+                    )}
+                  </div>
+                )}
+              <div className="col-span-2">
+                <label className="text-sm text-slate-500">Existing Loans</label>
+                {isEditing ? (
+                  <textarea
+                    rows={2}
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.bankingInfo?.existingLoans}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        bankingInfo: {
+                          ...editForm.bankingInfo,
+                          existingLoans: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.bankingInfo?.existingLoans || "-"}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Preferred Disbursement Account */}
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4 border-b pb-2">
+              Preferred Disbursement Account
+            </h3>
+            <div className="grid grid-cols-3 gap-6">
+              <div>
+                <label className="text-sm text-slate-500">Recipient Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={
+                      editForm.bankingInfo?.disbursementAccount?.recipientName
+                    }
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        bankingInfo: {
+                          ...editForm.bankingInfo,
+                          disbursementAccount: {
+                            ...editForm.bankingInfo.disbursementAccount,
+                            recipientName: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.bankingInfo?.disbursementAccount
+                      ?.recipientName || "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Bank Name</label>
+                {isEditing ? (
+                  <select
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={editForm.bankingInfo?.disbursementAccount?.bankName}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        bankingInfo: {
+                          ...editForm.bankingInfo,
+                          disbursementAccount: {
+                            ...editForm.bankingInfo.disbursementAccount,
+                            bankName: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                  >
+                    <option value="">Select Bank</option>
+                    {options.bankOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.bankingInfo?.disbursementAccount?.bankName ||
+                      "-"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm text-slate-500">Account Number</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-slate-200 rounded"
+                    value={
+                      editForm.bankingInfo?.disbursementAccount?.accountNumber
+                    }
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        bankingInfo: {
+                          ...editForm.bankingInfo,
+                          disbursementAccount: {
+                            ...editForm.bankingInfo.disbursementAccount,
+                            accountNumber: e.target.value,
+                          },
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="font-medium text-slate-900">
+                    {application.bankingInfo?.disbursementAccount
+                      ?.accountNumber || "-"}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* EDD Documents Section - Show for Sales role */}
+      {user.role === "Sales" && responseData?.loanApplication?.eddDocuments && (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+          <div className="p-6 border-b border-slate-100">
+            <h3 className="text-lg font-semibold text-slate-900">
+              EDD Documents
+            </h3>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-2 gap-6">
+              {/* EDD Document 1 */}
+              <div>
+                <label className="text-sm text-slate-500">EDD Document 1</label>
+                {(() => {
+                  const doc1 = responseData.loanApplication.eddDocuments;
+                  const hasDocumentId = doc1.eddDocument1DocumentId;
+                  const hasBase64 = doc1.eddDocument1Base64;
+                  const filename = doc1.eddDocument1Filename;
+
+                  if (!filename) {
+                    return (
+                      <p className="text-slate-400 italic mt-1">No document uploaded</p>
+                    );
+                  }
+
+                  if (hasDocumentId) {
+                    // Render as link using documentId URL
+                    return (
+                      <a
+                        href={`/documents/${hasDocumentId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                      >
+                        <FileText size={16} /> {filename}
+                      </a>
+                    );
+                  } else if (hasBase64) {
+                    // Render as download/open link using Base64 data URL
+                    return (
+                      <button
+                        onClick={() => openBase64File(hasBase64, filename)}
+                        className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                      >
+                        <FileText size={16} /> {filename}
+                      </button>
+                    );
+                  } else {
+                    // Show filename with "Not available" status
+                    return (
+                      <div className="mt-1">
+                        <p className="font-medium text-slate-900">{filename}</p>
+                        <p className="text-xs text-slate-400 italic">Not available</p>
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+
+              {/* EDD Document 2 */}
+              <div>
+                <label className="text-sm text-slate-500">EDD Document 2</label>
+                {(() => {
+                  const doc2 = responseData.loanApplication.eddDocuments;
+                  const hasDocumentId = doc2.eddDocument2DocumentId;
+                  const hasBase64 = doc2.eddDocument2Base64;
+                  const filename = doc2.eddDocument2Filename;
+
+                  if (!filename) {
+                    return (
+                      <p className="text-slate-400 italic mt-1">No document uploaded</p>
+                    );
+                  }
+
+                  if (hasDocumentId) {
+                    // Render as link using documentId URL
+                    return (
+                      <a
+                        href={`/documents/${hasDocumentId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                      >
+                        <FileText size={16} /> {filename}
+                      </a>
+                    );
+                  } else if (hasBase64) {
+                    // Render as download/open link using Base64 data URL
+                    return (
+                      <button
+                        onClick={() => openBase64File(hasBase64, filename)}
+                        className="flex items-center gap-2 font-medium text-bni-teal hover:underline mt-1"
+                      >
+                        <FileText size={16} /> {filename}
+                      </button>
+                    );
+                  } else {
+                    // Show filename with "Not available" status
+                    return (
+                      <div className="mt-1">
+                        <p className="font-medium text-slate-900">{filename}</p>
+                        <p className="text-xs text-slate-400 italic">Not available</p>
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Additional Information - Show for all roles except Sales */}
+      {user.role !== "Sales" && (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+          <div className="p-6 border-b border-slate-100">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Additional Information
+            </h3>
+          </div>
+
+          {/* Internal and External Checking Tables - Show for all roles */}
+          <div className="p-6 space-y-6">
+            {/* Internal Checking Table - Only show when status is Internal Checking or later */}
+            {(application.status === "Internal Checking" ||
+              application.status === "External Checking" ||
+              application.status === "Supervisor Review" ||
+              application.status === "Analyst Review" ||
+              application.status === "Approval" ||
+              application.status === "Approved" ||
+              application.status === "Disbursement Ready" ||
+              application.status === "Disbursed") && (
+                <div>
+                  <h4 className="text-md font-semibold text-slate-800 mb-3">
+                    Internal Checking
+                  </h4>
+                  <table className="w-full text-sm text-left text-slate-600">
+                    <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                      <tr>
+                        <th className="px-6 py-3">Check Type</th>
+                        <th className="px-6 py-3">Result</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="bg-white border-b">
+                        <td className="px-6 py-4 font-medium text-slate-900">
+                          DHN Result
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult
+                              ?.dhnResult === "CLEAR" ||
+                              icrCheckingData.internalCheckingResult
+                                ?.dhnResult === "PASS"
+                              ? "bg-green-100 text-green-800"
+                              : icrCheckingData.internalCheckingResult
+                                ?.dhnResult === "REJECT" ||
+                                icrCheckingData.internalCheckingResult
+                                  ?.dhnResult === "FAIL"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-slate-100 text-slate-800"
+                              }`}
+                          >
+                            {icrCheckingData.internalCheckingResult?.dhnResult ||
+                              "N/A"}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr className="bg-white border-b">
+                        <td className="px-6 py-4 font-medium text-slate-900">
+                          AML Result
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult
+                              ?.amlResult === "LOW_RISK" ||
+                              icrCheckingData.internalCheckingResult
+                                ?.amlResult === "PASS"
+                              ? "bg-green-100 text-green-800"
+                              : icrCheckingData.internalCheckingResult
+                                ?.amlResult === "HIGH_RISK" ||
+                                icrCheckingData.internalCheckingResult
+                                  ?.amlResult === "REJECT" ||
+                                icrCheckingData.internalCheckingResult
+                                  ?.amlResult === "FAIL"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-slate-100 text-slate-800"
+                              }`}
+                          >
+                            {icrCheckingData.internalCheckingResult?.amlResult ||
+                              "N/A"}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr className="bg-white border-b">
+                        <td className="px-6 py-4 font-medium text-slate-900">
+                          Central Dedup Result
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult
+                              ?.centralDedupResult === "NO_DUPLICATION" ||
+                              icrCheckingData.internalCheckingResult
+                                ?.centralDedupResult === "PASS"
+                              ? "bg-green-100 text-green-800"
+                              : icrCheckingData.internalCheckingResult
+                                ?.centralDedupResult === "DUPLICATION" ||
+                                icrCheckingData.internalCheckingResult
+                                  ?.centralDedupResult === "REJECT" ||
+                                icrCheckingData.internalCheckingResult
+                                  ?.centralDedupResult === "FAIL"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-slate-100 text-slate-800"
+                              }`}
+                          >
+                            {icrCheckingData.internalCheckingResult
+                              ?.centralDedupResult || "N/A"}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="px-6 py-4 font-medium text-slate-900">
+                          PEP Flag
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.internalCheckingResult?.pepFlag ===
+                              false
+                              ? "bg-green-100 text-green-800"
+                              : icrCheckingData.internalCheckingResult
+                                ?.pepFlag === true
+                                ? "bg-red-100 text-red-800"
+                                : "bg-slate-100 text-slate-800"
+                              }`}
+                          >
+                            {icrCheckingData.internalCheckingResult?.pepFlag !==
+                              undefined
+                              ? icrCheckingData.internalCheckingResult.pepFlag
+                                ? "Yes"
+                                : "No"
+                              : "N/A"}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+            {/* External Checking Table - Only show when status is External Checking or later */}
+            {(application.status === "External Checking" ||
+              application.status === "Supervisor Review" ||
+              application.status === "Analyst Review" ||
+              application.status === "Approval" ||
+              application.status === "Approved" ||
+              application.status === "Disbursement Ready" ||
+              application.status === "Disbursed") && (
+                <div>
+                  <h4 className="text-md font-semibold text-slate-800 mb-3">
+                    External Checking
+                  </h4>
+                  <table className="w-full text-sm text-left text-slate-600">
+                    <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                      <tr>
+                        <th className="px-6 py-3">Check Type</th>
+                        <th className="px-6 py-3">Result</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="bg-white border-b">
+                        <td className="px-6 py-4 font-medium text-slate-900">
+                          NPWP Checking
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult
+                              ?.npwpChecking === "PASS"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-slate-100 text-slate-800"
+                              }`}
+                          >
+                            {icrCheckingData.externalCheckingResult
+                              ?.npwpChecking || "N/A"}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr className="bg-white border-b">
+                        <td className="px-6 py-4 font-medium text-slate-900">
+                          Dukcapil Checking
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult
+                              ?.dukcapilChecking === "PASS"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-slate-100 text-slate-800"
+                              }`}
+                          >
+                            {icrCheckingData.externalCheckingResult
+                              ?.dukcapilChecking || "N/A"}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr className="bg-white">
+                        <td className="px-6 py-4 font-medium text-slate-900">
+                          SLIK Checking
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${icrCheckingData.externalCheckingResult
+                              ?.slikChecking === "PASS"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-slate-100 text-slate-800"
+                              }`}
+                          >
+                            {icrCheckingData.externalCheckingResult
+                              ?.slikChecking || "N/A"}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+          </div>
+        </div>
+      )}
+
+      {/* Limit Calculation - Show for Analyst, Approver, and Operation roles */}
+      {(user.role === "Analyst" ||
+        user.role === "Approver" ||
+        user.role === "Operation") &&
+        icrCheckingData.limitCalculation && (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+            <div className="p-6 border-b border-slate-100">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Limit Calculation
+              </h3>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-sm text-slate-500">Tenor</label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.tenor
+                      ? `${icrCheckingData.limitCalculation.tenor} Months`
+                      : "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">Credit Limit</label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.creditLimit
+                      ? `Rp ${Number(
+                        icrCheckingData.limitCalculation.creditLimit
+                      ).toLocaleString("id-ID")}`
+                      : "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">Credit Type</label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.tipeCredit || "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">
+                    Interest Rate
+                  </label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.interestRate
+                      ? `${icrCheckingData.limitCalculation.interestRate}%`
+                      : "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">Penalty Fee</label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.penaltyFee || "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">
+                    Provision Fee
+                  </label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.provisionFee || "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">
+                    Administration Fee
+                  </label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.administrationFee || "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">
+                    PSJT Administration Fee
+                  </label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.psjtAdministrationFee ||
+                      "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">DSR</label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.DSR || "-"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm text-slate-500">
+                    Monthly Installment
+                  </label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.installment
+                      ? `Rp ${icrCheckingData.limitCalculation.installment.toLocaleString(
+                        "id-ID"
+                      )}`
+                      : "-"}
+                  </p>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-sm text-slate-500">Credit Score</label>
+                  <p className="font-medium text-slate-900">
+                    {icrCheckingData.limitCalculation.creditScore || "-"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      {/* Approver Checklist */}
+      {(user.role === "Approver" ||
+        application.status === "Approval" ||
+        application.status === "Disbursement Ready" ||
+        application.status === "Disbursed") && (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+            <div className="p-6 border-b border-slate-100">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Approver Checklist
+              </h3>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                    checked={
+                      application.approverChecklist?.creditScoreChecked || false
+                    }
+                    onChange={(e) =>
+                      handleChecklistChange(
+                        "creditScoreChecked",
+                        e.target.checked
+                      )
+                    }
+                    disabled={
+                      user.role !== "Approver" ||
+                      application.status !== "Approval"
+                    }
+                  />
+                  <span className="text-slate-700">Credit Score Verified</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                    checked={
+                      application.approverChecklist?.documentsVerified || false
+                    }
+                    onChange={(e) =>
+                      handleChecklistChange("documentsVerified", e.target.checked)
+                    }
+                    disabled={
+                      user.role !== "Approver" ||
+                      application.status !== "Approval"
+                    }
+                  />
+                  <span className="text-slate-700">Documents Validated</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                    checked={
+                      application.approverChecklist?.collateralValuation || false
+                    }
+                    onChange={(e) =>
+                      handleChecklistChange(
+                        "collateralValuation",
+                        e.target.checked
+                      )
+                    }
+                    disabled={
+                      user.role !== "Approver" ||
+                      application.status !== "Approval"
+                    }
+                  />
+                  <span className="text-slate-700">
+                    Collateral Valuation Confirmed
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5 rounded border-slate-300 text-green-600 focus:ring-green-500"
+                    checked={
+                      application.approverChecklist?.complianceCheck || false
+                    }
+                    onChange={(e) =>
+                      handleChecklistChange("complianceCheck", e.target.checked)
+                    }
+                    disabled={
+                      user.role !== "Approver" ||
+                      application.status !== "Approval"
+                    }
+                  />
+                  <span className="text-slate-700">Compliance Check Passed</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">
+              Confirm Deletion
+            </h2>
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to delete application {application.id}? This
+              action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteApplication(application.id);
+                  navigate("/");
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDisbursementModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">
+              Disbursement Details
+            </h2>
+            <form onSubmit={handleDisbursementSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Bank Name
+                </label>
+                <input
+                  required
+                  type="text"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  value={disbursementForm.bankName}
+                  onChange={(e) =>
+                    setDisbursementForm({
+                      ...disbursementForm,
+                      bankName: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Account Number
+                </label>
+                <input
+                  required
+                  type="text"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  value={disbursementForm.accountNumber}
+                  onChange={(e) =>
+                    setDisbursementForm({
+                      ...disbursementForm,
+                      accountNumber: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Amount (IDR)
+                </label>
+                <MoneyInput
+                  required
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  value={disbursementForm.amount}
+                  onChange={(value) =>
+                    setDisbursementForm({ ...disbursementForm, amount: value })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Date
+                </label>
+                <input
+                  required
+                  type="date"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  value={disbursementForm.date}
+                  onChange={(e) =>
+                    setDisbursementForm({
+                      ...disbursementForm,
+                      date: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  rows={3}
+                  value={disbursementForm.notes}
+                  onChange={(e) =>
+                    setDisbursementForm({
+                      ...disbursementForm,
+                      notes: e.target.value,
+                    })
+                  }
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowDisbursementModal(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                >
+                  {loading ? "Processing..." : "Confirm Disbursement"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">
+              Request EDD
+            </h2>
+            <form onSubmit={handleEddSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Notes for Sales
+                </label>
+                <textarea
+                  required
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  rows={4}
+                  placeholder="Explain what documents or information are missing..."
+                  value={eddNotes}
+                  onChange={(e) => setEddNotes(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEddModal(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                >
+                  Submit Request
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">
+              Reject Application
+            </h2>
+            <form onSubmit={handleRejectSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Rejection Reason
+                </label>
+                <textarea
+                  required
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg"
+                  rows={4}
+                  placeholder="Enter reason for rejection..."
+                  value={rejectNotes}
+                  onChange={(e) => setRejectNotes(e.target.value)}
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowRejectModal(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {loading ? "Submitting..." : "Reject"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Recalculate Modal */}
+      {showRecalculateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-slate-900 mb-4">
+              Recalculate Loan
+            </h2>
+            <form onSubmit={handleRecalculateSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  New Loan Amount
+                </label>
+                <MoneyInput
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                  value={recalculateForm.loanAmount}
+                  onChange={(val) =>
+                    setRecalculateForm({ ...recalculateForm, loanAmount: val })
+                  }
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  New Tenor
+                </label>
+                <select
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-bni-teal/20 focus:border-bni-teal"
+                  value={recalculateForm.tenor}
+                  onChange={(e) =>
+                    setRecalculateForm({
+                      ...recalculateForm,
+                      tenor: Number(e.target.value),
+                    })
+                  }
+                >
+                  {options.tenorOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowRecalculateModal(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded-lg font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-4 py-2 bg-bni-teal text-white rounded-lg font-medium hover:bg-teal-700"
+                  onClick={recalculate}
+                >
+                  {loading ? "Updating..." : "Update Loan"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };

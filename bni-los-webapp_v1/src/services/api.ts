@@ -1,6 +1,6 @@
 import type { WorklistAPIResponse } from '../types/api';
-import type { Role } from '../types';
-import type { LoanApplicationPayload, LoanApplicationResponse, EDDUpdatePayload } from '../types/loanApplicationAPI';
+import type { Application, Role } from '../types';
+import type { LoanApplicationPayload, LoanApplicationResponse, EDDUpdatePayload, LoanRecalculationResponse } from '../types/loanApplicationAPI';
 
 
 // API Configuration
@@ -436,6 +436,65 @@ export async function submitLoanForApproval(
         }
 
         const data: LoanApplicationResponse = await response.json();
+
+        if (!data) {
+            throw new Error('Received empty response from server');
+        }
+
+        // Check response code - handle both string and number
+        const code = String(data?.responseCode);
+        if (code !== '00' &&
+            code !== '200' &&
+            code.toUpperCase() !== 'SUCCESS') {
+            throw new Error(data?.responseMessage || 'Failed to submit loan application');
+        }
+
+        return data;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unexpected error occurred while submitting the application.');
+    }
+}
+
+
+/**
+ * Submit loan for approval (Supervisor direct approval)
+ * @param piid - Process instance ID
+ * @returns Promise with API response
+ */
+export async function recalculateLoanApplication(application: Application): Promise<LoanRecalculationResponse> {
+    // Use proxy path to avoid CORS issues
+    const url = `${API_BASE_URL}/loan/recalculation`;
+
+    const body = {
+        piid: application.piid,
+        loanApplication: application.loanApplication
+    }
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Basic ${AUTH_CREDENTIALS}`,
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                throw new Error('Authentication failed. Please check credentials.');
+            }
+            if (response.status === 400) {
+                throw new Error('Invalid request. Please check the data.');
+            }
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data: LoanRecalculationResponse = await response.json();
 
         if (!data) {
             throw new Error('Received empty response from server');

@@ -56,7 +56,15 @@ export function useWorklist(
             }
 
             const mappedApplications = mapWorklistsToApplications(response.worklists);
-            setApplications(mappedApplications);
+
+            // Sort by submission date (newest first)
+            const sortedApplications = mappedApplications.sort((a, b) => {
+                const dateA = new Date(a.createdAt).getTime();
+                const dateB = new Date(b.createdAt).getTime();
+                return dateB - dateA; // Descending order (newest first)
+            });
+
+            setApplications(sortedApplications);
             setPagination(response.status.pagination);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';

@@ -3,6 +3,8 @@
  * Matches the exact structure required by /loan/insert endpoint
  */
 
+import type { LoanApplicationDetails } from "./api";
+
 export interface LoanInformation {
     loanId: string;
     pksNumberCompany?: string;
@@ -33,6 +35,15 @@ export interface Documents {
     npwpDocumentFilename?: string;
 }
 
+export interface EDDDocuments {
+    eddDocument1Base64?: string;
+    eddDocument1Filename?: string;
+    eddDocument1DocumentId?: string | null;
+    eddDocument2Base64?: string;
+    eddDocument2Filename?: string;
+    eddDocument2DocumentId?: string | null;
+}
+
 export interface LoanDetails {
     loanAmount?: number;
     tenor?: number;
@@ -58,6 +69,26 @@ export interface InternalCheckingResult {
     pepFlag?: boolean;
 }
 
+export interface ExternalCheckingResult {
+    npwpChecking?: string;
+    dukcapilChecking?: string;
+    slikChecking?: string;
+}
+
+export interface LimitCalculation {
+    tenor?: string;
+    creditLimit?: string;
+    tipeCredit?: string;
+    interestRate?: string;
+    penaltyFee?: string;
+    provisionFee?: string;
+    administrationFee?: string;
+    psjtAdministrationFee?: string;
+    DSR?: string;
+    installment?: number;
+    creditScore?: string;
+}
+
 export interface LoanApplication {
     status: string;
     loanId?: string; // Added for responses that have loanId at top level
@@ -65,10 +96,13 @@ export interface LoanApplication {
     customerInformation?: CustomerInformation;
     emergencyContact?: EmergencyContact;
     documents?: Documents;
+    eddDocuments?: EDDDocuments;
     loanDetails?: LoanDetails;
     bankingInformation?: BankingInformation;
     preferredDisbursementAccount?: PreferredDisbursementAccount;
     internalCheckingResult?: InternalCheckingResult;
+    externalCheckingResult?: ExternalCheckingResult;
+    limitCalculation?: LimitCalculation;
 }
 
 export interface LoanApplicationPayload {
@@ -96,4 +130,11 @@ export interface EDDUpdatePayload {
         preferredDisbursementAccount: PreferredDisbursementAccount;
         internalCheckingResult: InternalCheckingResult;
     };
+}
+
+export interface LoanRecalculationResponse {
+    responseCode: string;
+    responseMessage: string;
+    piid?: string;
+    loanApplication: LoanApplicationDetails
 }

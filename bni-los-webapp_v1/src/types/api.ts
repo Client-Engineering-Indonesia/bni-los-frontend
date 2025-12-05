@@ -37,6 +37,29 @@ export interface LoanApplicationDetails {
         lengthOfEmployment?: string;
         salary?: number;
     };
+    emergencyContact?: {
+        contactName?: string;
+        phoneNumber?: string;
+        relationship?: string;
+    };
+    documents?: {
+        ktpDocumentId?: string;
+        ktpDocumentBase64?: string;
+        ktpDocumentFilename?: string;
+        npwpDocumentId?: string;
+        npwpDocumentBase64?: string;
+        npwpDocumentFilename?: string;
+        pkBase64?: string;
+        skkBase64?: string;
+    };
+    eddDocuments?: {
+        eddDocument1Base64?: string;
+        eddDocument1Filename?: string;
+        eddDocument1DocumentId?: string | null;
+        eddDocument2Base64?: string;
+        eddDocument2Filename?: string;
+        eddDocument2DocumentId?: string | null;
+    };
     loanDetails?: {
         loanAmount?: number;
         tenor?: number;
@@ -45,6 +68,7 @@ export interface LoanApplicationDetails {
         bankName?: string;
         accountNumber?: string;
         hasPayrollAccount?: boolean;
+        payrollAccountNumber?: string;
         existingLoans?: string;
     };
     preferredDisbursementAccount?: {
@@ -66,6 +90,19 @@ export interface LoanApplicationDetails {
         dukcapilChecking?: string;
         slikChecking?: string;
     };
+    limitCalculation: {
+        tenor?: string;
+        creditLimit?: string;
+        tipeCredit?: string;
+        interestRate?: string;
+        penaltyFee?: string;
+        provisionFee?: string;
+        administrationFee?: string;
+        psjtAdministrationFee?: string;
+        DSR?: string;
+        installment?: number;
+        creditScore?: string;
+    }
 }
 
 // Pagination state

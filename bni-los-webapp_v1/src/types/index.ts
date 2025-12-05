@@ -1,3 +1,5 @@
+import type { LoanApplicationDetails } from "./api";
+
 export type Role = 'Sales' | 'ICR' | 'Supervisor' | 'Analyst' | 'Approver' | 'Operation' | 'Admin';
 
 export type ApplicationStatus =
@@ -105,6 +107,7 @@ export interface Application {
         dukcapilChecking?: string;
         slikChecking?: string;
     };
+    loanApplication?: LoanApplicationDetails
 }
 
 export interface User {
